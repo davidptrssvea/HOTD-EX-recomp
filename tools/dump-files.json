@@ -9,5 +9,9 @@
     "fs/sfd/title_bg.sfd",
     "fs/compiled",
     "fs/afs"
-  ]
+  ],
+  "operator": {
+    "path": "elf/hodextestR.elf",
+    "sha256": "3b9eef550528d6db8f092e947990afc3a414a900fe3648866f9d4e9b98f952a8"
+  }
 }

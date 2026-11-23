@@ -78,6 +78,7 @@ static void input_options_load(void)
     input_active_mode=input_pref_mode;
     settings()->raw_mouse=input_active_mode==1;
     if(input_active_mode>=2)settings()->mouse_grab=0;
+    if(hotdex_desktop() && input_pref_aa>4)input_pref_aa=4;
     settings()->aa=input_pref_aa;
 }
 static void input_option_cycle(int row, int delta)

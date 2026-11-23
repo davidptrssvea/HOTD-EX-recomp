@@ -39,10 +39,10 @@ function Write-HotdexSettings([string]$Path,[hashtable]$Values) {
         if([IO.File]::Exists($Path)){[IO.File]::Replace($temporary,$Path,[NullString]::Value)}else{[IO.File]::Move($temporary,$Path)}
     }finally{if([IO.File]::Exists($temporary)){[IO.File]::Delete($temporary)}}
 }
-function New-HotdexStartInfo([string]$RecompDir,[string]$GameDir) {
+function New-HotdexStartInfo([string]$RecompDir,[string]$GameDir,[switch]$Operator) {
     if(!$GameDir){$GameDir=Join-Path (Split-Path -Parent $RecompDir) 'disk0'}
     $RecompDir=[IO.Path]::GetFullPath($RecompDir);$GameDir=[IO.Path]::GetFullPath($GameDir)
-    $exe=Join-Path $RecompDir 'hotdex-desktop.exe';$elfDir=Join-Path $GameDir 'elf';$elf=Join-Path $elfDir 'hodexRI.elf';$ini=Join-Path $RecompDir 'lindbergh.ini'
+    $exe=Join-Path $RecompDir $(if($Operator){'hotdex-testmenu.exe'}else{'hotdex-desktop.exe'});$elfDir=Join-Path $GameDir 'elf';$elf=Join-Path $elfDir $(if($Operator){'hodextestR.elf'}else{'hodexRI.elf'});$ini=Join-Path $RecompDir 'lindbergh.ini'
     foreach($file in $exe,$elf,$ini){if(![IO.File]::Exists($file)){throw "Required file not found: $file"}}
     if(![IO.Directory]::Exists((Join-Path $GameDir 'fs'))){throw "Game data folder not found: $GameDir\fs"}
     $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=$exe;$info.Arguments='"'+$elf+'"';$info.WorkingDirectory=$elfDir
@@ -55,6 +55,7 @@ function New-HotdexStartInfo([string]$RecompDir,[string]$GameDir) {
     $info.EnvironmentVariables['TEA_DIR']=$GameDir
     $info.EnvironmentVariables['HOTD4_SETTINGS_DIR']=$RecompDir
     $info.EnvironmentVariables['LINDBERGH_SETTINGS_FILE']=$ini
+    if($Operator){$info.EnvironmentVariables['HOTD4_OPERATOR_ASSETS']=Join-Path $RecompDir 'operator-assets'}
     if(!$info.EnvironmentVariables['LINDBERGH_NVRAM']){
         $info.EnvironmentVariables['LINDBERGH_NVRAM']=Join-Path $RecompDir 'lindbergh_nvram.bin'
     }

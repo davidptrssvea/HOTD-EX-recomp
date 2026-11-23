@@ -4,7 +4,7 @@ function Get-HotdUpdateGame([string]$Game) {
     switch ($Game) {
         Normal  { @{ Repo='HOTD4-recomp'; Bundle='HOTD4-Local-Builder'; App='HOTD4_Recomp'; Exe='hotd4-desktop.exe'; VR='hotd4-vr.exe'; Launcher='Play HOTD4.exe'; Dumps=@('game/disk0','The House of the Dead 4/disk0'); Elf='elf/hod4M.elf'; Lock='.hotd4-setup.lock'; RootExe=@('Play HOTD4.exe','Model Viewer.exe') } }
         Special { @{ Repo='HOTD-4-Special-recomp'; Bundle='HOTD4SP-Local-Builder'; App='HOTD4SP_Recomp'; Exe='hotd4sp-desktop.exe'; VR='hotd4sp-vr.exe'; Launcher='HOTD4SP_Recomp/Play HOTD4 Special.exe'; Dumps=@('hotd4sp'); Elf='elf/hod4M.elf'; Lock='.hotd4-setup.lock'; RootExe=@() } }
-        EX      { @{ Repo='HOTD-EX-recomp'; Bundle='HOTDEX-Local-Builder'; App='HOTDEX_Recomp'; Exe='hotdex-desktop.exe'; Launcher='Play HOTD EX.exe'; Dumps=@('disk0'); Elf='elf/hodexRI.elf'; Lock='.hotdex-setup.lock'; RootExe=@('Play HOTD EX.exe') } }
+        EX      { @{ Repo='HOTD-EX-recomp'; Bundle='HOTDEX-Local-Builder'; App='HOTDEX_Recomp'; Exe='hotdex-desktop.exe'; Operator='hotdex-testmenu.exe'; Launcher='Play HOTD EX.exe'; Dumps=@('disk0'); Elf='elf/hodexRI.elf'; Lock='.hotdex-setup.lock'; RootExe=@('Play HOTD EX.exe') } }
         default { throw 'Unknown HOTD edition.' }
     }
 }
@@ -197,7 +197,7 @@ function Invoke-HotdUpdateWorker([string]$Request) {
         [IO.File]::WriteAllText($status, 'Ready')
         $ready = $true
         if (!$owner.WaitForExit(60000)) { throw 'Close the game menu and retry the update.' }
-        $gameProcesses = @($game.Exe, $game.VR) | Where-Object { $_ } |
+        $gameProcesses = @($game.Exe, $game.VR, $game.Operator) | Where-Object { $_ } |
             ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }
         $running = Get-Process -Name $gameProcesses -ErrorAction SilentlyContinue |
             Where-Object { $_.Path -and [IO.Path]::GetDirectoryName($_.Path) -eq $app }

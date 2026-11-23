@@ -5,6 +5,7 @@
 #include "game_profile.h"
 #include "lindbergh_rt.h"
 #include "skip_media.h"
+#include "gameplay_options.h"
 
 #if defined(_WIN64) && !defined(LINDBERGH_OPENXR) && !defined(LINDBERGH_VULKAN)
 #include "gl_posix.h"
@@ -101,16 +102,33 @@ static const LgGameProfile k_profile = {
     .action_switch = {{0, 0, 0x08}, {0, 0, 0x04}},
 };
 
+static int ex_operator_available;
+static unsigned ex_operator_button(unsigned buttons)
+{
+    static int held;int down=(buttons&CAB_TEST)!=0;
+    if(down && !held){if(ex_operator_available){fprintf(stderr,"[hotdex] opening arcade Test Menu\n");exit(76);}fprintf(stderr,"[hotdex] Test Menu unavailable: install the verified hodextestR.elf with Setup\n");}
+    held=down;return buttons&~CAB_TEST;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
         fprintf(stderr, "usage: %s <hodexRI.elf> [game args...]\n", argv[0]);
         return 2;
     }
+    char operator_path[4096],app_path[4096];
+    snprintf(operator_path,sizeof operator_path,"%s",argv[1]);
+    char*a=strrchr(operator_path,'/'),*b=strrchr(operator_path,'\\'),*tail=a&&(!b||a>b)?a:b;
+    if(tail)snprintf(tail+1,sizeof operator_path-(size_t)(tail+1-operator_path),"hodextestR.elf");else strcpy(operator_path,"hodextestR.elf");
+    const char*dir=getenv("HOTD4_SETTINGS_DIR");
+    snprintf(app_path,sizeof app_path,"%s/hotdex-testmenu.exe",dir&&*dir?dir:".");
+    FILE*op=fopen(operator_path,"rb"),*exe=fopen(app_path,"rb");ex_operator_available=op&&exe;if(op)fclose(op);if(exe)fclose(exe);
     guest_install_crash_handler();
     if (guest_load(argv[1], argc - 1, argv + 1) != 0) return 1;
     game_profile_apply(&k_profile);
     hle_register_all();
+    host_cabinet_button_filter(ex_operator_button);
+    gameplay_options_load();
     install_media_skip();
 #if defined(_WIN64) && !defined(LINDBERGH_OPENXR) && !defined(LINDBERGH_VULKAN)
     install_desktop_layout();

@@ -1,9 +1,10 @@
 [CmdletBinding()]
-param([ValidateSet('Main','Settings')][string]$Page='Main')
+param([ValidateSet('Main','Settings')][string]$Page='Main',[switch]$InGame,[long]$GameWindow=0)
 $ErrorActionPreference='Stop'
 try {
     . (Join-Path $PSScriptRoot 'hotdex-startmenu.ps1')
-    Show-HotdexStartMenu -RecompDir $PSScriptRoot -InitialPage $Page
+    $result=Show-HotdexStartMenu -RecompDir $PSScriptRoot -InitialPage $Page -InGame:$InGame -GameWindow $GameWindow
+    if($InGame){exit ([int]$result)}
 } catch {
     Add-Type -AssemblyName PresentationFramework
     [void][Windows.MessageBox]::Show($_.Exception.GetBaseException().Message,'HOTD EX - Menu error')

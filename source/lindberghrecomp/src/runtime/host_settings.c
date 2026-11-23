@@ -183,6 +183,8 @@ HostSettings *settings(void)
     return &g_set;
 }
 
+void settings_reload(void) { g_loaded=1;load(); }
+
 void settings_save(void)
 {
     /* unattended runs are configured by the environment; never write theirs */

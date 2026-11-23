@@ -39,6 +39,7 @@ typedef struct {
 
 HostSettings *settings(void);                /* loaded on first use */
 void          settings_save(void);
+void          settings_reload(void);
 void          settings_reset_controls(void);
 void          settings_reset_aim(void);
 const char   *settings_action_name(HostAction a);

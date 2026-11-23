@@ -126,11 +126,11 @@
   <GradientStop Color="#0608080B" Offset="0.62"/><GradientStop Color="#D508080B" Offset="1"/>
  </LinearGradientBrush></Rectangle.Fill></Rectangle>
  <Viewbox Stretch="Uniform"><Grid Width="1280" Height="720" KeyboardNavigation.TabNavigation="Cycle">
-  <TextBlock Text="THE ARCADE COLLECTION" FontSize="13" FontWeight="SemiBold" Foreground="#D0C7C2" Margin="74,56,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+  <TextBlock Name="CollectionCaption" Text="THE ARCADE COLLECTION" FontSize="13" FontWeight="SemiBold" Foreground="#D0C7C2" Margin="74,56,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
   <Border Name="ControlSummary" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="660" Margin="74,0,0,64" Background="#C810141B" BorderBrush="#655B5146" BorderThickness="1" Padding="18,14">
    <StackPanel><TextBlock Text="CONTROLS" FontSize="12" Foreground="#F07460" FontWeight="SemiBold" Margin="0,0,0,9"/>
     <TextBlock Name="ControlSummaryText" FontSize="16" Foreground="#F0EFEB" TextWrapping="Wrap" LineHeight="25"/>
-    <TextBlock Text="Start skips movies and instructions. F1 releases the mouse." FontSize="13" Foreground="#ADB4C2" Margin="0,9,0,0"/>
+    <TextBlock Name="ControlFooter" Text="Start skips movies and instructions. F1 releases the mouse." FontSize="13" Foreground="#ADB4C2" Margin="0,9,0,0"/>
    </StackPanel>
   </Border>
   <Border Name="ContextCard" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,248,0,0" Width="510" Background="#DE101218" BorderBrush="#575962" BorderThickness="1" Padding="26">
@@ -144,6 +144,7 @@
    <Rectangle Height="2" Fill="#BA383C" Width="66" HorizontalAlignment="Left" Margin="0,0,0,22"/>
    <StackPanel Name="MainPage">
     <Button Name="Play" Content="Play Arcade"/><Button Name="Options" Content="Settings"/>
+    <Button Name="TestMenu" Content="Arcade Test Menu"/><Button Name="RestartArcade" Content="Restart Arcade" Visibility="Collapsed"/><Button Name="ReturnMain" Content="Main Menu" Visibility="Collapsed"/>
     <Button Name="OtherGames" Content="Other Games" Visibility="Collapsed"/><Button Name="Quit" Content="Quit"/>
     <TextBlock Text="Arrow keys / Enter to select. Esc to return." Foreground="#ADB4C2" FontSize="13" Margin="0,8,0,0"/>
    </StackPanel>
@@ -157,9 +158,11 @@
       <ComboBox Name="DisplayMode" Height="38" Margin="0,5,0,15" AutomationProperties.Name="Display Mode"/>
      </StackPanel>
     </Grid>
-    <Button Name="GraphicsOpen" Content="Graphics / Anti-Aliasing..." Height="44" FontSize="18"/>
-    <Button Name="MouseOpen" Content="Mouse / Aim..." Height="44" FontSize="18"/>
-    <Button Name="AudioOpen" Content="Audio..." Height="44" FontSize="18"/>
+    <Button Name="GraphicsOpen" Content="Graphics / Anti-Aliasing..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <Button Name="MouseOpen" Content="Mouse / Aim..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <Button Name="DevicesOpen" Content="Lightguns / Sinden..." Height="36" FontSize="16" Margin="0,0,0,7"/><Button Name="BindingsOpen" Content="Key Bindings..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <Button Name="AudioOpen" Content="Audio..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <TextBlock Name="RestartNotice" Visibility="Collapsed" Text="Resolution, AA and input-device changes apply after Restart Arcade." Foreground="#ADB4C2" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
     <TextBlock Name="SettingsStatus" Foreground="#F07460" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <Button Name="Save" Content="Save and Back" Height="42" FontSize="16" Margin="0,0,8,9"/>
@@ -198,10 +201,31 @@
     <Slider Name="Volume" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,10,0,24" AutomationProperties.Name="Master Volume"/>
     <Button Name="AudioBack" Content="Back" Height="44" FontSize="18"/>
    </StackPanel>
+   <StackPanel Name="DevicesPage" Visibility="Collapsed">
+    <TextBlock Text="Lightguns / Sinden" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
+    <Label Content="Input Mode" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="InputMode" Height="34" Margin="0,4,0,10"/>
+    <Label Content="Player 1 Device" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="Gun1" Height="34" Margin="0,4,0,10"/>
+    <Label Content="Player 2 Device" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="Gun2" Height="34" Margin="0,4,0,8"/>
+    <Button Name="RefreshDevices" Content="Refresh Devices" Height="30" FontSize="14"/>
+    <CheckBox Name="Sinden" Content="White Sinden border" Foreground="#F0EFEB" FontSize="15" Margin="0,5,0,10"/>
+    <ComboBox Name="BorderWidth" Height="34" Margin="0,0,0,12"/>
+    <Button Name="DevicesBack" Content="Back" Height="40" FontSize="17"/>
+   </StackPanel>
+   <StackPanel Name="BindingsPage" Visibility="Collapsed">
+    <TextBlock Text="Key Bindings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8"/>
+    <TextBlock Name="BindingStatus" Height="36" Text="Choose a control, then press a key or mouse button." Foreground="#ADB4C2" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
+    <ScrollViewer Height="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Name="BindingList"/></ScrollViewer>
+    <Button Name="ResetBindings" Content="Restore Default Bindings" Height="34" FontSize="15" Margin="0,10,0,8"/>
+    <Button Name="BindingsBack" Content="Back" Height="40" FontSize="17"/>
+   </StackPanel>
    <StackPanel Name="OtherPage" Visibility="Collapsed">
     <TextBlock Text="Other Games" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
     <StackPanel Name="OtherGameList"/><Button Name="OtherBack" Content="Back" Height="44" FontSize="18"/>
    </StackPanel>
   </StackPanel>
  </Grid></Viewbox>
+ <Border Name="TrackingBorder" BorderBrush="White" BorderThickness="0" Visibility="Collapsed" IsHitTestVisible="False"><Border Name="TrackingOutline" BorderBrush="Black" BorderThickness="0"/></Border>
 </Grid></Window>

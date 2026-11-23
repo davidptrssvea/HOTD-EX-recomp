@@ -1,8 +1,10 @@
-# The House of the Dead EX — Windows Local Builder
+# The House of the Dead EX â€” Windows Local Builder
 
 Build the Windows desktop port on your own PC using your own extracted arcade dump. This package contains source, scripts and launcher UI only. It contains no arcade executable, generated game code, game assets, screenshots, movies, audio, textures, cabinet save or prebuilt game executable.
 
-**[Download the Windows builder](https://github.com/davidptrssvea/HOTD-EX-recomp/releases/latest)** · [Release notes](RELEASE-NOTES.md) · [Test coverage](BUILD-VERIFICATION.md) · [Report an issue](https://github.com/davidptrssvea/HOTD-EX-recomp/issues)
+**v1.1.0:** adds an in-game pause menu, configurable controls, separate lightgun/Sinden settings and the original arcade Test Menu. Includes the existing verified menu updater. See [PRIORITY-CHANGES.md](PRIORITY-CHANGES.md) for details and test coverage.
+
+**[Download the Windows builder](https://github.com/davidptrssvea/HOTD-EX-recomp/releases/latest)** Â· [Release notes](RELEASE-NOTES.md) Â· [Test coverage](BUILD-VERIFICATION.md) Â· [Report an issue](https://github.com/davidptrssvea/HOTD-EX-recomp/issues)
 
 Other projects: [HOTD4](https://github.com/davidptrssvea/HOTD4-recomp) and [HOTD4 Special](https://github.com/davidptrssvea/HOTD-4-Special-recomp). Each game requires its own supported dump and installation.
 
@@ -11,7 +13,7 @@ Other projects: [HOTD4](https://github.com/davidptrssvea/HOTD4-recomp) and [HOTD
 1. Extract the entire builder ZIP into a short, writable folder, for example `D:\HOTDEX-Builder`. Do not run it inside the ZIP.
 2. Run **Setup.cmd** and select your extracted HOTD EX dump (`disk0`, its parent, or `disk0\elf`). A lone ELF is insufficient: the complete `fs` data and both original sound libraries are required.
 3. Leave Setup open while it verifies files, obtains its isolated build tools, generates the game code and compiles it locally. Progress and the full setup-log path are shown in the console.
-4. Open **HOTDEX-PC\Play HOTD EX.exe**. The fullscreen menu includes Play Arcade, Settings and Other Games when installed HOTD4/Special launchers are found.
+4. Open **HOTDEX-PC\Play HOTD EX.exe**. The fullscreen menu includes Play Arcade, Settings, Arcade Test Menu, Updates and Other Games when installed HOTD4/Special launchers are found.
 
 To choose a different installation or tool-cache location:
 
@@ -91,6 +93,6 @@ The Lindbergh runtime, pcrecomp lifter and port source/licenses are under `sourc
 
 The main menu checks GitHub for the latest stable release in the background. Open **Updates** to read the release notes and choose whether to download and install a newer version. Setup verifies the package and builds the update locally from the arcade dump in your installation. The menu reopens after installation.
 
-The update replaces the launcher and runtime files. It keeps settings, cabinet saves, the existing game dump. The update folder beside the installation holds the Setup log and the previous versions of replaced files. Internet access and free disk space for a local build are required.
+The update replaces the launcher and runtime files. It keeps settings, control/device profiles, cabinet saves and the existing game dump. The update folder beside the installation holds the Setup log and the previous versions of replaced files. Internet access and free disk space for a local build are required.
 
-To add the updater to an installation from an earlier release, run this builder's Setup and select the existing installation folder. Update `ui/hotd-update-version.txt` to match the tag when preparing a release.
+To add the updater to an installation from an earlier release, run this builder's Setup and select the existing installation folder. Close the game before updating. The updater is available from the launcher; it is hidden while the game is paused.

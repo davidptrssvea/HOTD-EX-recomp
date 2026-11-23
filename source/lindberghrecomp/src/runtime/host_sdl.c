@@ -82,6 +82,9 @@ static void sinden_border_draw(int width, int height);
 static int extra_crosshair_draw(float x, float y, float scale);
 static int crosshair_size_get(void);
 static void crosshair_color_apply(GLubyte r, GLubyte g, GLubyte b, GLubyte a);
+static int hotdex_desktop(void){const char*t=game_profile()->title;return t && !strcmp(t,"The House of the Dead EX");}
+static int hotdex_pause_loop(int width,int height);
+static int hotdex_extra_input(int bind,int down);
 static int hotd4_pause_enabled(void)
 {
     static int enabled = -1;
@@ -95,6 +98,7 @@ static int hotd4_pause_enabled(void)
 
 #ifndef HOTD4_DESKTOP_PAUSE
 enum {HC_PAUSE,HC_RESTART,HC_FULLSCREEN,HC_CROSSHAIR,HC_MOUSELOCK};
+#define hotdex_desktop() 0
 #define hc_custom 0
 #define hc_init() ((void)0)
 static int hc_matches(int id,int key){return id==HC_PAUSE?key==SDLK_ESCAPE:id==HC_FULLSCREEN?key==SDLK_F11:id==HC_CROSSHAIR?key==SDLK_F2:id==HC_MOUSELOCK?key==SDLK_F1:0;}
@@ -298,6 +302,7 @@ static int      g_gun2_on, g_gun2_px = -100000, g_gun2_py = -100000;   /* the se
 int host_hotd4_restart_key(int key){return !raw_suspended && hc_matches(HC_RESTART,key);}
 int host_hotd4_start_binding(void){return hc_get(ACT_START1);}
 #else
+#define hotdex_extra_input(bind,down) 0
 #define input_active_mode 0
 #define raw_held 0u
 #define remote_held 0u
@@ -459,7 +464,7 @@ static void cabinet_action(HostAction a, int down)
     }
     unsigned bit = CAB_OF[a];
     /* The host gun supplies P1 directly; shared keyboard firing keys belong to P2. */
-    if (input_active_mode >= 3 && a >= ACT_TRIGGER && a <= ACT_FIREMODE) bit <<= CAB_P2_SHIFT;
+    if (input_active_mode >= 3 && a >= ACT_TRIGGER && a <= ACT_FIREMODE && !(hotdex_desktop() && a == ACT_ACTION)) bit <<= CAB_P2_SHIFT;
     if (!bit) return;
     if (down) { g_held |= bit; g_cab_latch |= bit; } else g_held &= ~bit;
     if (down && bit == CAB_P1_TRIGGER && !g_lat_t) { g_lat_t = SDL_GetPerformanceCounter(); g_lat_f = g_frame; }
@@ -473,7 +478,7 @@ static int cabinet_input(int bind, int down)
 #ifdef HOTD4_DESKTOP_PAUSE
     hc_init();
 #endif
-    int hit = 0;
+    int hit = hotdex_extra_input(bind,down);
     int actions=ACT_COUNT;
 #ifdef HOTD4_DESKTOP_PAUSE
     actions=11;
@@ -1054,7 +1059,7 @@ static void pump(void)
             }
             if (hc_matches(HC_PAUSE,e.key.keysym.sym)) {
 #ifdef HOTD4_DESKTOP_PAUSE
-                if (hotd4_pause_enabled()) {
+                if (hotdex_desktop() || hotd4_pause_enabled()) {
                     g_pause_requested = 1;
                     return;
                 }
@@ -1493,7 +1498,7 @@ void host_swap(void)
         static int want = -1;
         if (want < 0) want = env_int("LINDBERGH_GL_THREAD", 0);   /* or the game's profile: vr.gl_thread */
 #ifdef HOTD4_DESKTOP_PAUSE
-        if (hotd4_pause_enabled()) want = 0;
+        if (hotdex_desktop() || hotd4_pause_enabled()) want = 0;
 #endif
         if (want == 1) {
 #ifdef LINDBERGH_VULKAN
@@ -2612,6 +2617,7 @@ static int hotd4_pause_loop(int w, int h)
     glUseProgram((GLuint)program);
     return action;
 }
+#include "hotdex_pause.h"
 #include "achievement_runtime.h"
 #endif
 
@@ -2688,6 +2694,12 @@ static void frame_gl(void *arg)
 #ifdef HOTD4_DESKTOP_PAUSE
         if (g_pause_requested) {
             g_pause_requested = 0;
+            if(hotdex_desktop()){
+                int ex_action=hotdex_pause_loop(win_w,win_h);
+                if(ex_action)exit(ex_action==77?0:ex_action);
+                if(fb)glBindFramebuffer(GL_FRAMEBUFFER,(GLuint)fb);
+                return;
+            }
             int action = hotd4_pause_loop(win_w, win_h);
             if (action == RESTART) exit(74);
             if (action == MAIN_MENU) exit(0);
@@ -2703,8 +2715,10 @@ static void frame_gl(void *arg)
         /* Draw crosshair overlay on top of frame */
         draw_crosshair_overlay(win_w, win_h);
 #ifdef HOTD4_DESKTOP_PAUSE
-        if(!hotd4_special_menu())high_scores_hud_draw(win_w,win_h);
-        achievement_draw(win_w, win_h);
+        if(!hotdex_desktop()){
+            if(!hotd4_special_menu())high_scores_hud_draw(win_w,win_h);
+            achievement_draw(win_w, win_h);
+        }
         sinden_border_draw(win_w, win_h);
 #endif
 

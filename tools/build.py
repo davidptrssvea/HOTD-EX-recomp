@@ -38,6 +38,9 @@ def atomic_copy(source,destination):
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--dump',required=True);ap.add_argument('--output',required=True);ap.add_argument('--toolchain',required=True);ap.add_argument('--jobs',type=int,default=0);ap.add_argument('--validate-only',action='store_true');ap.add_argument('--stage-update',action='store_true');a=ap.parse_args()
     dump=find_dump(a.dump);print('Verified The House of the Dead EX:',dump,flush=True)
+    operator=dump/SPEC['operator']['path']
+    have_operator=operator.is_file() and digest(operator)==SPEC['operator']['sha256']
+    if not have_operator:print('Verified hodextestR.elf is missing; arcade Test Menu will be unavailable.',flush=True)
     if a.validate_only:return
     out=Path(a.output).resolve();tool=Path(a.toolchain).resolve();bin=tool/'mingw64/bin'
     for protected in (dump,ROOT/'source',ROOT/'tools',ROOT/'ui',tool):
@@ -73,10 +76,23 @@ def main():
                 destination=gen/file.name
                 if not destination.is_file() or digest(destination)!=digest(file):atomic_copy(file,destination)
     else:print('Reusing verified local generated code.',flush=True)
+    if have_operator:
+        opgen=source/'games/hotdextest/generated';opgen.mkdir(parents=True,exist_ok=True)
+        opmarker=opgen/'local-build-signature.txt';op_signature=signature+'-operator-viewport-v2'
+        if not opmarker.is_file() or opmarker.read_text()!=op_signature:
+            run([bin/'python.exe','-m','tools','recomp',operator,opgen],cwd=source/'lindberghrecomp')
+            with (opgen/'recomp_gl_thunks_windows.c').open('w',encoding='utf-8') as f:
+                run([bin/'python.exe',source/'lindberghrecomp/tools/gen_gl_thunks.py',opgen/'recomp_imports.h',bin.parent/'include/GL/glew.h'],stdout=f)
+            opthunk=opgen/'recomp_gl_thunks_windows.c';text=opthunk.read_text()
+            for name,body in json.loads((ROOT/'tools/gl-overrides.json').read_text()).items():
+                if name not in ('glViewport','glScissor'):continue
+                text,n=re.subn(r'static void th_'+name+r'\(CPU \*c\)\n\{.*?\n\}',lambda _:body,text,count=1,flags=re.S)
+                if n!=1:raise ValueError('Operator GL wrapper changed: '+name)
+            opthunk.write_text(text);opmarker.write_text(op_signature)
     build=ROOT/'build'
-    run([bin/'cmake.exe','-S',source,'-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release','-DLINDBERGH_GAMES=hotdex','-DLINDBERGH_OPENXR=OFF','-DLINDBERGH_RENDERER=OPENGL','-DCMAKE_C_COMPILER='+str(bin/'gcc.exe'),'-DCMAKE_MAKE_PROGRAM='+str(bin/'ninja.exe'),'-DCMAKE_PREFIX_PATH='+str(bin.parent)])
-    run([bin/'cmake.exe','--build',build,'--target','hotdex','--parallel',jobs])
-    executable=build/'hotdex.exe';pending=[executable];dlls={};seen=set();system=Path(os.environ['SystemRoot'])/'System32'
+    run([bin/'cmake.exe','-S',source,'-B',build,'-G','Ninja','-DCMAKE_BUILD_TYPE=Release','-DLINDBERGH_GAMES='+('hotdex;hotdextest' if have_operator else 'hotdex'),'-DLINDBERGH_OPENXR=OFF','-DLINDBERGH_RENDERER=OPENGL','-DCMAKE_C_COMPILER='+str(bin/'gcc.exe'),'-DCMAKE_MAKE_PROGRAM='+str(bin/'ninja.exe'),'-DCMAKE_PREFIX_PATH='+str(bin.parent)])
+    run([bin/'cmake.exe','--build',build,'--target',*(['hotdex','hotdextest'] if have_operator else ['hotdex']),'--parallel',jobs])
+    executable=build/'hotdex.exe';pending=[executable]+([build/'hotdextest.exe'] if have_operator else []);dlls={};seen=set();system=Path(os.environ['SystemRoot'])/'System32'
     # Current MSYS2 can resolve SDL2 through sdl2-compat. SDL2.dll loads
     # SDL3.dll dynamically, so it is absent from its PE import table.
     if b'SDL3.dll' in (bin/'SDL2.dll').read_bytes():
@@ -91,14 +107,22 @@ def main():
             if file.is_file():dlls[name]=file;pending.append(file)
             elif not (system/name).is_file() and not name.lower().startswith(('api-ms-','ext-ms-')):raise ValueError('Unresolved runtime dependency: '+name)
     out.mkdir(parents=True,exist_ok=True);app=out/'HOTDEX_Recomp';app.mkdir(exist_ok=True)
+    localdump=out/'disk0'
     if not a.stage_update:
-        localdump=out/'disk0';print('Copying your arcade data into the installation (the source remains unchanged)...',flush=True)
+        print('Copying your arcade data into the installation (the source remains unchanged)...',flush=True)
         shutil.copytree(dump/'fs',localdump/'fs',dirs_exist_ok=True)
         for name in SPEC['files']:atomic_copy(dump/name,localdump/name)
+        if have_operator:atomic_copy(operator,localdump/'elf/hodextestR.elf')
         # Seed a private cabinet save once; an update never overwrites it.
         if not (app/'lindbergh_nvram.bin').exists() and (dump/'elf/lindbergh_nvram.bin').is_file():shutil.copy2(dump/'elf/lindbergh_nvram.bin',app/'lindbergh_nvram.bin')
     for name,file in dlls.items():atomic_copy(file,app/name)
     atomic_copy(executable,app/'hotdex-desktop.exe');run([bin/'strip.exe',app/'hotdex-desktop.exe'])
+    if have_operator:
+        atomic_copy(build/'hotdextest.exe',app/'hotdex-testmenu.exe');run([bin/'strip.exe',app/'hotdex-testmenu.exe'])
+        run([Path(os.environ['SystemRoot'])/'System32/WindowsPowerShell/v1.0/powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',ROOT/'tools/operator-font.ps1','-OutputDir',app/'operator-assets'])
+        for name in ('SEGA_KakuGothic-DB-Roman_12.tga','SEGA_KakuGothic-DB-Roman_12.abc','logo.tga'):
+            for folder in (operator.parent,dump.parent/'[SYS]/usr/lib/boot',dump/'usr/lib/boot'):
+                if not a.stage_update and (folder/name).is_file():atomic_copy(folder/name,localdump/'elf'/name);break
     for file in (ROOT/'ui').iterdir():
         if file.name=='lindbergh.ini' and (app/file.name).exists():continue
         atomic_copy(file,app/file.name)
