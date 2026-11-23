@@ -1,4 +1,4 @@
-# The House of the Dead EX â€” Windows Local Builder
+# The House of the Dead EX Windows Local Builder
 
 Build the Windows desktop port on your own PC using your own extracted arcade dump. This package contains source, scripts and launcher UI only. It contains no arcade executable, generated game code, game assets, screenshots, movies, audio, textures, cabinet save or prebuilt game executable.
 
