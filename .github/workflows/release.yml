@@ -18,6 +18,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - name: Test complete display menus and saved preferences
+        shell: powershell
+        run: ./.release/test_display_controls.ps1
       - name: Test remembered Setup folders and Browse controls
         shell: powershell
         run: ./.release/test_setup_paths.ps1

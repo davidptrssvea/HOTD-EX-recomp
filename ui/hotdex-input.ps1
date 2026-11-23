@@ -39,12 +39,12 @@ function Write-HotdexText([string]$Path,[string]$Value){
  try{[IO.File]::WriteAllText($temp,$Value,[Text.UTF8Encoding]::new($false));if([IO.File]::Exists($Path)){[IO.File]::Replace($temp,$Path,[NullString]::Value)}else{[IO.File]::Move($temp,$Path)}}finally{if([IO.File]::Exists($temp)){[IO.File]::Delete($temp)}}
 }
 function Get-HotdexInputPreferences([string]$Dir,$Settings){
- $v=@{Mode=[int]$Settings.raw_mouse;Gun1='auto';Gun2='disabled';Border=0;Width=50}
- foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'))){$p=Join-Path $Dir $entry[1];if([IO.File]::Exists($p)){$v[$entry[0]]=[IO.File]::ReadAllText($p).Trim()}}
- if([string]$v.Mode -notmatch '^[0-4]$'){$v.Mode=0};if($v.Width -notin 25,50,75,100){$v.Width=50};return $v
+ $v=@{Mode=[int]$Settings.raw_mouse;Gun1='auto';Gun2='disabled';Border=0;Width=50;VSync=0}
+ foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'),@('VSync','vsync-profile.txt'))){$p=Join-Path $Dir $entry[1];if([IO.File]::Exists($p)){$v[$entry[0]]=[IO.File]::ReadAllText($p).Trim()}}
+ if([string]$v.VSync -notmatch '^[01]$'){$v.VSync=0};if([string]$v.Mode -notmatch '^[0-4]$'){$v.Mode=0};if($v.Width -notin 25,50,75,100){$v.Width=50};return $v
 }
 function Write-HotdexInputPreferences([string]$Dir,$Values,$Bindings){
- foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'),@('AA','aa-profile.txt'),@('Offscreen','offscreen-reload.txt'))){Write-HotdexText (Join-Path $Dir $entry[1]) ([string]$Values[$entry[0]])}
+ foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'),@('VSync','vsync-profile.txt'),@('AA','aa-profile.txt'),@('Offscreen','offscreen-reload.txt'))){Write-HotdexText (Join-Path $Dir $entry[1]) ([string]$Values[$entry[0]])}
  Write-HotdexText (Join-Path $Dir 'mouse-speed.txt') ([Convert]::ToString($Values.Speed,[Globalization.CultureInfo]::InvariantCulture))
  $lines=@('HOTD4-CONTROLS-1');foreach($row in $script:HotdexControlRows){$lines+=($row[0]+' '+$Bindings[$row[0]])};Write-HotdexText (Join-Path $Dir 'controls-profile.txt') (($lines -join "`n")+"`n")
 }

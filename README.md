@@ -2,11 +2,16 @@
 
 Build the Windows desktop port on your own PC using your own extracted arcade dump. This package contains source, scripts and launcher UI only. It contains no arcade executable, generated game code, game assets, screenshots, movies, audio, textures, cabinet save or prebuilt game executable.
 
-**v1.1.1:** remembers the last successful dump and installation folders in manual Setup, with editable paths and Browse buttons. Includes the pause menu, control/lightgun settings, optional arcade Test Menu and verified launcher updater from v1.1.0.
+**v1.1.2:** adds saved desktop V-Sync Off/On under Settings > Graphics. Includes the launcher updater, remembered Setup folders, pause menu, control/lightgun settings and optional arcade Test Menu.
 
 **[Download the Windows builder](https://github.com/davidptrssvea/HOTD-EX-recomp/releases/latest)** Â· [Release notes](RELEASE-NOTES.md) Â· [Test coverage](BUILD-VERIFICATION.md) Â· [Report an issue](https://github.com/davidptrssvea/HOTD-EX-recomp/issues)
 
 Other projects: [HOTD4](https://github.com/davidptrssvea/HOTD4-recomp) and [HOTD4 Special](https://github.com/davidptrssvea/HOTD-4-Special-recomp). Each game requires its own supported dump and installation.
+
+
+## Display options (v1.1.2)
+
+In **Settings > Graphics**, choose **V-Sync > On** to synchronize desktop presentation with the display. Save and restart the game to apply. Off remains the default. The desktop setting does not alter OpenXR headset timing.
 
 ## Install
 

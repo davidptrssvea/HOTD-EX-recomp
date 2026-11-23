@@ -174,6 +174,8 @@
     <TextBlock Text="Graphics" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,12"/>
     <Label Content="Anti-Aliasing" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
     <ComboBox Name="AntiAliasing" Height="38" Margin="0,5,0,16" AutomationProperties.Name="Anti-Aliasing"/>
+    <Label Content="V-Sync" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="VSync" Height="38" Margin="0,5,0,16" AutomationProperties.Name="V-Sync" ToolTip="Restart Arcade to apply. VR uses headset timing."/>
     <Label Content="Anisotropic Filtering" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
     <ComboBox Name="Filtering" Height="38" Margin="0,5,0,22" AutomationProperties.Name="Anisotropic Filtering"/>
     <Button Name="GraphicsBack" Content="Back" Height="44" FontSize="18"/>

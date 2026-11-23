@@ -1194,7 +1194,7 @@ int host_window_open(const char *title)
      * focus; LINDBERGH_SHOT still captures the frames */
     const char *hv = getenv("LINDBERGH_HIDDEN");
     int hidden = hv && *hv && *hv != '0';
-    Uint32 win_flags = 
+    Uint32 win_flags =
 #if defined(LINDBERGH_VULKAN_OFFSCREEN)
         0 |
 #elif defined(LINDBERGH_VULKAN_XR) && defined(__ANDROID__)
@@ -1357,7 +1357,16 @@ int host_gl_context(void)
     glViewport(0, 0, g_win.w, g_win.h);
     glScissor(0, 0, g_win.w, g_win.h);
 #endif
-    SDL_GL_SetSwapInterval(env_int("LINDBERGH_VSYNC", 0));   /* the game paces itself; macOS stalls vsync swaps for hidden windows */
+    /* Desktop presentation only. OpenXR keeps its own headset timing. */
+    int swap_interval=env_int("LINDBERGH_VSYNC",0);
+#ifdef HOTD4_DESKTOP_PAUSE
+    swap_interval=input_pref_vsync;
+#endif
+    int swap_result=SDL_GL_SetSwapInterval(swap_interval);
+    fprintf(stderr,"[window] V-sync requested: %d; active swap interval: %d%s%s\n",
+            swap_interval,SDL_GL_GetSwapInterval(),swap_result?"; driver error: ":"",
+            swap_result?SDL_GetError():"");
+    if(swap_result)fprintf(stderr,"[window] V-sync could not be applied; using the driver's current setting.\n");
 #endif
     fprintf(stderr, "[window] GL context ready: %s / %s\n",
             (const char *)glGetString(GL_RENDERER), (const char *)glGetString(GL_VERSION));
@@ -1848,10 +1857,10 @@ static const wchar_t *achievement_descriptions[12];
 static GLuint achievement_star_texture(int metal);
 static int achievement_is_unlocked(int id);
 static int achievement_count(void);
-static int menu_row_count(const PauseMenu *menu) { return menu->settings_page==6?3:menu->settings_page==1?(hotd4_special_menu()?9:10):menu->settings_page==2?9:hotd4_special_menu()?4:7; }
+static int menu_row_count(const PauseMenu *menu) { return menu->settings_page==6?3:menu->settings_page==1?(hotd4_special_menu()?9:10):menu->settings_page==2?10:hotd4_special_menu()?4:7; }
 
-static int menu_step(const PauseMenu *menu){return menu->settings_page==2?42:menu->settings_page==1?38:menu->settings_page==6?42:ROW_STEP;}
-static int menu_height(const PauseMenu *menu){return menu->settings_page==2?36:menu->settings_page==1?32:menu->settings_page==6?36:ROW_HEIGHT;}
+static int menu_step(const PauseMenu *menu){return menu->settings_page==2?38:menu->settings_page==1?38:menu->settings_page==6?42:ROW_STEP;}
+static int menu_height(const PauseMenu *menu){return menu->settings_page==2?32:menu->settings_page==1?32:menu->settings_page==6?36:ROW_HEIGHT;}
 
 static int pause_row_at(const PauseMenu *menu, SDL_Window *window, int x, int y)
 {
@@ -1974,16 +1983,17 @@ static int pause_panel(PauseMenu *menu)
             swprintf(color,64,L"Crosshair Color  < %ls >",crosshair_color_names[crosshair_color_get()]);
             wchar_t border_width[96];swprintf(border_width,96,L"Border Width   < %ls >",sinden_width_names[sinden_border_width_index()]);
             wchar_t score_display[96];swprintf(score_display,96,L"High Score Display  < %ls >",high_scores_enabled()?L"On":L"Off");
-            const wchar_t *settings_items[] = {hud, reticle, style, size, color, sinden, border_width, score_display, L"Gameplay...", L"Input & Anti-Aliasing..."};
-            const wchar_t *special_settings[]={hud,reticle,style,size,color,sinden,border_width,L"Gameplay...",L"Input & Anti-Aliasing..."};
-            wchar_t mode[96],gun1[128],gun2[128],aa[80],mouse_speed[80],smoothing[80];
+            const wchar_t *settings_items[] = {hud, reticle, style, size, color, sinden, border_width, score_display, L"Gameplay...", L"Input & Graphics..."};
+            const wchar_t *special_settings[]={hud,reticle,style,size,color,sinden,border_width,L"Gameplay...",L"Input & Graphics..."};
+            wchar_t mode[96],gun1[128],gun2[128],aa[80],mouse_speed[80],smoothing[80],vsync[80];
             swprintf(mode,96,L"Input  < %ls >",input_mode_names[input_pref_mode]);
             input_gun_label(0,gun1,128);input_gun_label(1,gun2,128);
             if(input_pref_aa)swprintf(aa,80,L"Anti-Aliasing  < MSAA %dx >",input_pref_aa);
             else wcscpy(aa,L"Anti-Aliasing  < Off >");
             swprintf(mouse_speed,80,L"Mouse Speed  < %.2fx >", (double)input_mouse_speed);
             swprintf(smoothing,80,L"Mouse Smoothing  < %ls >", mouse_smoothing_names[input_mouse_smoothing]);
-            const wchar_t *input_items[]={mode,gun1,gun2,aa,mouse_speed,smoothing,L"Key Bindings...",L"Apply & Restart",L"Back"};
+            swprintf(vsync,80,L"V-Sync  < %ls >",input_pref_vsync?L"On":L"Off");
+            const wchar_t *input_items[]={mode,gun1,gun2,aa,mouse_speed,smoothing,vsync,L"Key Bindings...",L"Apply & Restart",L"Back"};
             wchar_t offscreen[96],blood[96];
             swprintf(offscreen,96,L"Lightgun Off-Screen Reload  < %ls >",gameplay_offscreen_reload()?L"On":L"Off");
             swprintf(blood,96,L"Blood Splatter  < %ls >",gameplay_blood_splatter()?L"Enhanced":L"Original");
@@ -2006,7 +2016,7 @@ static int pause_panel(PauseMenu *menu)
             }
             pause_text(dc, hint, 32, 515, menu->settings_page == 2 ?
                        input_pref_mode>=3 ? L"P1: gun buttons. P2: mouse / shooting keys. Restart to apply." :
-                       L"Mouse tuning is live. Restart to apply input mode or MSAA." : menu->settings_page ?
+                       L"Mouse tuning is live. Restart to apply input mode, MSAA or V-sync." : menu->settings_page ?
                        L"Arrow keys to adjust     Enter to select     Esc to go back" :
                        L"Arrow keys or mouse     Enter to select     Esc to resume", muted);
         }
@@ -2485,7 +2495,7 @@ static int hotd4_pause_loop(int w, int h)
                 if(high_scores_back(&event)) {menu.settings_page=0;menu.selected=HIGH_SCORES;pause_panel(&menu);pause_draw(&menu);}
                 continue;
             }
-            if(menu.settings_page==4){int result=controls_event(&menu,&event);if(event.type==SDL_WINDOWEVENT)result=1;if(result==2){menu.settings_page=2;menu.selected=4;}if(result){pause_panel(&menu);pause_draw(&menu);}continue;}
+            if(menu.settings_page==4){int result=controls_event(&menu,&event);if(event.type==SDL_WINDOWEVENT)result=1;if(result==2){menu.settings_page=2;menu.selected=7;}if(result){pause_panel(&menu);pause_draw(&menu);}continue;}
             if(menu.settings_page==3){
                 int result=trophy_event(&menu,&event);
                 if(result==2){menu.settings_page=0;menu.selected=ACHIEVEMENTS;menu.trophy_drag=0;}
@@ -2529,10 +2539,10 @@ static int hotd4_pause_loop(int w, int h)
                     gameplay_options_save();redraw=1;
                 }else if(activate){menu.settings_page=1;menu.selected=hotd4_special_menu()?7:8;redraw=1;}
             } else if (menu.settings_page == 2) {
-                if ((activate || delta) && menu.selected < 6) {
+                if ((activate || delta) && menu.selected < 7) {
                     input_option_cycle(menu.selected,delta);redraw=1;
-                } else if(activate && menu.selected==6){menu.settings_page=4;menu.selected=0;menu.binding_capture=-1;menu.binding_message[0]=0;redraw=1;}
-                else if(activate && menu.selected==7){action=RESTART;break;}
+                } else if(activate && menu.selected==7){menu.settings_page=4;menu.selected=0;menu.binding_capture=-1;menu.binding_message[0]=0;redraw=1;}
+                else if(activate && menu.selected==8){action=RESTART;break;}
                 else if(activate){menu.settings_page=1;menu.selected=hotd4_special_menu()?8:9;redraw=1;}
             } else if (menu.settings_page) {
                 if ((activate || delta) && menu.selected == 0) {

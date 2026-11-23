@@ -44,7 +44,7 @@ function Show-HotdexStartMenu {
     $pages='MainPage','OptionsPage','GraphicsPage','MousePage','AudioPage','OtherPage','DevicesPage','BindingsPage'
     $context=@{
         OptionsPage=@('MAKE IT YOURS','Choose your render resolution and display mode, then fine-tune graphics, mouse input and audio. Save to keep your changes.')
-        GraphicsPage=@('A CLEARER VIEW','The 3D scene renders at your selected resolution. Anti-aliasing smooths edges; anisotropic filtering keeps angled surfaces clearer. Original artwork retains its original detail.')
+        GraphicsPage=@('A CLEARER VIEW','The 3D scene renders at your selected resolution. Anti-aliasing smooths edges; anisotropic filtering keeps angled surfaces clearer. V-sync applies after restarting Arcade. Original artwork retains its original detail.')
         MousePage=@('AIM YOUR WAY','Raw Relative uses mouse movement without Windows pointer acceleration and locks the pointer. F1 releases it. The extra mouse crosshair is separate from the game''s own aiming indicators.')
         AudioPage=@('SET THE VOLUME','Enable or mute the game and choose your master volume. Your selection is used by both launch shortcuts.')
         DevicesPage=@('TWO PLAYERS, TWO DEVICES','For two lightguns, select Lightgun (Raw Input) and assign a different device to each player. Auto chooses distinct absolute guns. For a gun and a Windows/Parsec mouse, choose the mixed co-op mode; the mouse controls P2. Use Space / Right Ctrl for the two pedals by default.')
@@ -66,6 +66,7 @@ function Show-HotdexStartMenu {
     }
     & $addOption $ui.Resolution ($desktop -join 'x') ("Desktop ($($desktop[0]) x $($desktop[1]))")
     foreach($pair in @(@('0','Windowed'),@('1','Fullscreen'))){& $addOption $ui.DisplayMode $pair[0] $pair[1]}
+    foreach($pair in @(@('0','Off'),@('1','On (sync to display)'))){& $addOption $ui.VSync $pair[0] $pair[1]}
     foreach($pair in @(@('0','Off'),@('2','MSAA 2x'),@('4','MSAA 4x'))){& $addOption $ui.AntiAliasing $pair[0] $pair[1]}
     foreach($n in 1,2,4,8,16){& $addOption $ui.Filtering ([string]$n) $(if($n -eq 1){'Off'}else{"AF ${n}x"})}
     foreach($pair in @(@('0','Desktop Cursor'),@('1','Raw Relative'))){& $addOption $ui.MouseMode $pair[0] $pair[1]}
@@ -129,7 +130,7 @@ function Show-HotdexStartMenu {
         $ui.MouseGrab.IsChecked=[bool]$s.mouse_grab;$ui.LeaveReload.IsChecked=[bool]$s.leave_reload
         $ui.AudioEnabled.IsChecked=!$s.muted;$ui.Volume.Value=$s.volume;$ui.VolumeValue.Text=([string][int]$s.volume)+'%'
         $session.Bindings=Get-HotdexBindings $RecompDir;$session.Capture=$null;& $refreshBindings
-        $extra=Get-HotdexInputPreferences $RecompDir $s;& $selectOption $ui.InputMode $extra.Mode;& $selectOption $ui.BorderWidth $extra.Width;$ui.Sinden.IsChecked=[string]$extra.Border -eq '1';& $refreshDevices $extra.Gun1 $extra.Gun2
+        $extra=Get-HotdexInputPreferences $RecompDir $s;& $selectOption $ui.VSync $extra.VSync;& $selectOption $ui.InputMode $extra.Mode;& $selectOption $ui.BorderWidth $extra.Width;$ui.Sinden.IsChecked=[string]$extra.Border -eq '1';& $refreshDevices $extra.Gun1 $extra.Gun2
         & $updateGrab;$ui.SettingsStatus.Text='';$ui.ControlSummaryText.Text=Get-HotdexControlSummary $ini
     }
     $saveSettings={
@@ -144,7 +145,7 @@ function Show-HotdexStartMenu {
                 leave_reload=[int][bool]$ui.LeaveReload.IsChecked;muted=[int](!$ui.AudioEnabled.IsChecked);volume=[int]$ui.Volume.Value}
             foreach($row in $script:HotdexControlRows | Select-Object -First 11){$code=$session.Bindings[$row[0]];$v[$row[0]]=if($code -lt 0){'mouse'+(-$code)}else{$code}}
             $v.raw_mouse=[int]([int]$ui.InputMode.SelectedItem.Tag -eq 1)
-            Write-HotdexInputPreferences $RecompDir @{Mode=$ui.InputMode.SelectedItem.Tag;Gun1=$ui.Gun1.SelectedItem.Tag;Gun2=$ui.Gun2.SelectedItem.Tag;Border=[int][bool]$ui.Sinden.IsChecked;Width=$ui.BorderWidth.SelectedItem.Tag;AA=$v.aa;Offscreen=$v.leave_reload;Speed=$v.mouse_sens} $session.Bindings
+            Write-HotdexInputPreferences $RecompDir @{Mode=$ui.InputMode.SelectedItem.Tag;Gun1=$ui.Gun1.SelectedItem.Tag;Gun2=$ui.Gun2.SelectedItem.Tag;Border=[int][bool]$ui.Sinden.IsChecked;Width=$ui.BorderWidth.SelectedItem.Tag;AA=$v.aa;VSync=$ui.VSync.SelectedItem.Tag;Offscreen=$v.leave_reload;Speed=$v.mouse_sens} $session.Bindings
             Write-HotdexSettings $ini $v;$ui.SettingsStatus.Text='';return $true
         }catch{$ui.SettingsStatus.Text=$_.Exception.Message;return $false}
     }
@@ -209,7 +210,7 @@ function Show-HotdexStartMenu {
     $window.Add_PreviewKeyDown({param($sender,$eventArgs)
         if($session.Capture){& $captureBinding (ConvertTo-HotdexKey $eventArgs);$eventArgs.Handled=$true;return}
         if($eventArgs.Key -eq 'Escape'){
-            foreach($key in 'Resolution','DisplayMode','AntiAliasing','Filtering','MouseMode','Crosshair'){if($ui[$key].IsDropDownOpen){return}}
+            foreach($key in 'Resolution','DisplayMode','AntiAliasing','VSync','Filtering','MouseMode','Crosshair'){if($ui[$key].IsDropDownOpen){return}}
             switch($session.Page){'MainPage'{$window.Close()}'OptionsPage'{& $loadSettings;& $showPage 'MainPage'}'OtherPage'{& $showPage 'MainPage'}default{& $showPage 'OptionsPage'}}
             $eventArgs.Handled=$true
         }elseif($eventArgs.Key -in 'Up','Down' -and $session.Page -in 'MainPage','OtherPage'){

@@ -1,6 +1,20 @@
 # Windows local builder verification â€” 2026-11-23
 
+## v1.1.2: desktop display options
+
+Complete launcher tests initialize the updater and game switcher and accept `-InstalledApp` to check deployed files. A missing updater is explicitly rejected. All three complete installed-menu tests pass; the normal game's actual `Spela HOTD4 i 4K.cmd 0` entry completed 90 native frames with an isolated cabinet save, exit 0.
+
+- Native Windows desktop build completed with the existing locally generated game code.
+- Real WPF menu checks passed: default V-Sync Off, save On, reopen On, save Off; bottom actions remain reachable. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .release/test_display_controls.ps1`.
+- Real SDL/OpenGL runs accepted swap interval 0 and 1; the active interval was read back from the NVIDIA driver. This does not verify every GPU driver or OpenXR headset.
+
+
 Tested on Windows 11 x64 with **Windows PowerShell 5.1**. The package is for the desktop EX port.
+
+### Release builder validation
+
+The complete Windows builder ran with a verified local dump and a separate staged installation. It compiled the production desktop and arcade Test Menu targets and copied all launcher code, updater dependencies and the release version stamp into the stage. Generated game code/object caches were reused or refreshed as required; this was not a new empty-toolchain installation. The updater stage copied no original game data. Complete menu tests and active desktop V-Sync readback passed. Extracted source-only packages passed Windows PowerShell 5.1 Setup integrity and supported-dump validation.
+
 
 ## Clean setup and local generation
 

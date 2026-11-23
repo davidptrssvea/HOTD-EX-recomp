@@ -3,7 +3,7 @@
 /* Windows desktop preferences and per-device lightgun input. Included by host_sdl. */
 #include <SDL_syswm.h>
 #include "coop_mouse.h"
-static int input_pref_mode, input_active_mode, input_pref_aa, input_prefs_loaded;
+static int input_pref_mode, input_active_mode, input_pref_aa, input_pref_vsync, input_prefs_loaded;
 static int raw_suspended;
 static float input_mouse_speed;
 static int input_mouse_smoothing;
@@ -59,6 +59,9 @@ static void input_options_load(void)
     input_mouse_speed = settings()->mouse_sens;
     if (!isfinite(input_mouse_speed) || input_mouse_speed <= 0.0f) input_mouse_speed = 1.0f;
     char value[32];
+    input_pref_vsync=env_int("LINDBERGH_VSYNC",0);
+    if(input_read("vsync-profile.txt",value,sizeof value))
+        input_pref_vsync=!strcmp(value,"1");
     if (input_read("mouse-speed.txt", value, sizeof value)) {
         float speed = (float)atof(value);
         if (speed >= 0.5f && speed <= 8.0f) input_mouse_speed = speed;
@@ -99,6 +102,7 @@ static void input_option_cycle(int row, int delta)
         snprintf(value, sizeof value, "%d", input_mouse_smoothing);
         input_write("mouse-smoothing.txt", value);
     }
+    if(row==6){input_pref_vsync=!input_pref_vsync;input_write("vsync-profile.txt",input_pref_vsync?"1":"0");}
     if(row==3){
         const int samples[]={0,2,4,8}; int at=0;
         for(int i=0;i<4;i++)if(samples[i]==input_pref_aa)at=i;
