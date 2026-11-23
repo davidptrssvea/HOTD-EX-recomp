@@ -26,12 +26,11 @@ try {
     Set-BuilderPhase '1/6 Package and dump verification'
     $interactive = !$DumpPath
     if($interactive){
-        Add-Type -AssemblyName System.Windows.Forms
-        Write-Host 'Waiting for your dump selection in the folder dialog...'
-        $picker=New-Object Windows.Forms.FolderBrowserDialog
-        $picker.Description='Select your extracted HOTD EX arcade dump (disk0 or its parent folder)'
-        if($picker.ShowDialog() -ne [Windows.Forms.DialogResult]::OK){Write-Host 'Setup cancelled.';exit 0}
-        $DumpPath=$picker.SelectedPath;$picker.Dispose()
+        . (Join-Path $PSScriptRoot 'tools/setup_paths.ps1')
+        Write-Host 'Waiting for your dump and installation folders in the Setup dialog...'
+        $paths=Select-BuilderSetupPaths 'EX' (Join-Path $PSScriptRoot 'HOTDEX-PC') $InstallDir
+        if(!$paths){Write-Host 'Setup cancelled.';exit 0}
+        $DumpPath=$paths.DumpPath;$InstallDir=$paths.InstallDir
     }
     $spec=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'tools/dump-files.json') | ConvertFrom-Json
     $DumpPath=(Resolve-Path -LiteralPath $DumpPath).Path
@@ -150,6 +149,10 @@ try {
         Invoke-Checked $python @((Join-Path $PSScriptRoot 'tools\menu_background.py'),'--app',(Join-Path $installedRoot 'HOTDEX_Recomp'),'--dump',(Join-Path $installedRoot 'disk0'),'--toolchain',$ToolchainPath)
     } catch {
         Write-Warning 'The game was installed, but the optional menu background could not be rendered. See HOTDEX_Recomp\menu-background.log. Run Setup again to retry; the plain menu remains available.'
+    }
+    if(!$StageUpdate){
+        . (Join-Path $PSScriptRoot 'tools/setup_paths.ps1')
+        Save-BuilderPathHistory 'EX' $dump $InstallDir
     }
     Write-Host "Ready. Open: $(Join-Path $InstallDir 'Play HOTD EX.exe')"
 } catch {

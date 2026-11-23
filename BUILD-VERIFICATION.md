@@ -48,3 +48,11 @@ The v1.0.1 updater was retained and merged with these changes, rather than repla
 - The updater checks for a running EX operator as well as the game before replacing programs. Source-only manifest and deterministic ZIP checks exclude game code generated from the dump, original executables/libraries, textures, images, movies, saves and compiled game binaries.
 
 The new release remains a desktop Windows build. No EX VR/headset test, physical two-lightgun certification, full all-stage playthrough or new Windows 10 LTSC test is claimed.
+
+## v1.1.1: remembered manual Setup folders
+
+Windows PowerShell 5.1 checks cover separate Normal/Special/EX histories, spaces and Unicode in paths, atomic replacement, corrupt/wrong-edition/relative history fallback, saved prefill, explicit installation overrides, cancellation and preserving the last successful choices. Real WinForms control tests cover both Browse handlers, editing, input validation, Continue and control bounds. Only the OS folder picker is substituted for unattended tests. The same tests run in GitHub's Windows release checks.
+
+Real EX Setup was also run with the shared helper: a staged build created no history; a successful ordinary installation recorded the verified dump/install paths; a failed installation, ValidateOnly and a subsequent StageUpdate left that history byte-identical. Existing INI, cabinet save, local background and profile data remained byte-identical. Normal/Special package and supported-dump validation and existing Windows installer recovery checks passed. This tests the shared helper's real Setup integration without claiming a fresh native recompilation of unchanged Normal game code.
+
+All release packages retain the existing verified launcher updater. Only paths are remembered; no game assets are included.

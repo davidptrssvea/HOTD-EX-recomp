@@ -12,7 +12,7 @@
     },
     {
       "path": "BUILD-VERIFICATION.md",
-      "sha256": "8c037020606ea3666e6625a961d89954f22d7f0190a39096ce2bd8b065e69f9a"
+      "sha256": "ea0c3d64c138e150355cdb4ff468fccce30d187af41ca65037f6a7ae95cb7373"
     },
     {
       "path": "LICENSE",
@@ -24,11 +24,11 @@
     },
     {
       "path": "README.md",
-      "sha256": "505fd7f0155d7baaf9f5bdaa0062541103db60e96aa469baeed9d06c6ddecc0b"
+      "sha256": "7af56d44cca4f598b42144a80a6be023321e213e470903e6616ca5e0f2272ff4"
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "06fb64592e848a1f6423fdb41c857b88e578f2bccbd59d74c0f26140062ff1e1"
+      "sha256": "9debda4c1b7bb591761da400fcbdac47e698cccf9bdc83e11ebcc083d538f6e9"
     },
     {
       "path": "Setup.cmd",
@@ -36,11 +36,15 @@
     },
     {
       "path": "setup.ps1",
-      "sha256": "a5ef47022b84b10fcbf53cb0ccacf7a3a1a248b03d8394b827ad0ec1ed74c7e3"
+      "sha256": "00738f833b7d0ca9ae76edef22dbf32f113ebeef48addd51ed899d1dc1aa9296"
     },
     {
       "path": "source/CMakeLists.txt",
       "sha256": "aa1e5604b81aa46e1deb0212f7848caca3768d52660cac08df4fa8a6f9aa4182"
+    },
+    {
+      "path": "source/LICENSE",
+      "sha256": "969c26f4e5da359fea84127dfecd3057729cfed75211fb324bdb42af6c087614"
     },
     {
       "path": "source/games/hotdex/src/host.c",
@@ -53,10 +57,6 @@
     {
       "path": "source/games/hotdextest/src/host.c",
       "sha256": "bd02ada8adf2a88d5f5fb59e7bc1198ea0166d0a88e7b1cf50c8952867d0166f"
-    },
-    {
-      "path": "source/LICENSE",
-      "sha256": "969c26f4e5da359fea84127dfecd3057729cfed75211fb324bdb42af6c087614"
     },
     {
       "path": "source/lindberghrecomp/CMakeLists.txt",
@@ -339,6 +339,10 @@
       "sha256": "bb72bb8a15caf501bc35198eff23779790b7907647c3f44650e46f15c944792b"
     },
     {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/README.md",
+      "sha256": "c63a64dd6a1bfbc0a6c1e3d1a5eaa24d5e0621290d200bb11057eb4e48526baf"
+    },
+    {
       "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_export.py",
       "sha256": "0d6e1ae02f1b0dee44ef20f529c98b26b83a114c3dc9e25cb075e63a36353079"
     },
@@ -353,10 +357,6 @@
     {
       "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_xrefs.py",
       "sha256": "24adcaaf6a63322fc3201ff472b31501633ce1bbc33538a1554739c6fc568205"
-    },
-    {
-      "path": "source/lindberghrecomp/pcrecomp/tools/ida/README.md",
-      "sha256": "c63a64dd6a1bfbc0a6c1e3d1a5eaa24d5e0621290d200bb11057eb4e48526baf"
     },
     {
       "path": "source/lindberghrecomp/pcrecomp/tools/lift/__init__.py",
@@ -411,6 +411,10 @@
       "sha256": "df35235a2a7228a24e49a2ee19714638b79ca9b6042006a0e019735ba3bc77c3"
     },
     {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/README.md",
+      "sha256": "4a3e34992e762c8a28a5b5d5c5e00c454b0ca6a652de51c58d97b8b3d0ed5377"
+    },
+    {
       "path": "source/lindberghrecomp/pcrecomp/tools/ne/__init__.py",
       "sha256": "14c0e9d40967cf9641cd3933ed613e6dbca1b7e137fd33ac797c0407d3677d32"
     },
@@ -433,10 +437,6 @@
     {
       "path": "source/lindberghrecomp/pcrecomp/tools/ne/ne_xref.py",
       "sha256": "aa1e0b2e41c36dfd476623997443d29dea6ad00c289af77a5612ca286828128e"
-    },
-    {
-      "path": "source/lindberghrecomp/pcrecomp/tools/ne/README.md",
-      "sha256": "4a3e34992e762c8a28a5b5d5c5e00c454b0ca6a652de51c58d97b8b3d0ed5377"
     },
     {
       "path": "source/lindberghrecomp/pcrecomp/tools/ne/win16.py",
@@ -879,12 +879,12 @@
       "sha256": "dac08733326888d59976673a2aa2fae783b1d5c3beb1de3fe2e5b0e16a672dae"
     },
     {
-      "path": "source/lindberghrecomp/third_party/dlmalloc/malloc.c",
-      "sha256": "1b34a5b1ef797ab2ec49d362f2956e03fdce6e50b47b6e7f53b14e0a2ec7e4ae"
-    },
-    {
       "path": "source/lindberghrecomp/third_party/LICENSE-DejaVu.txt",
       "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93"
+    },
+    {
+      "path": "source/lindberghrecomp/third_party/dlmalloc/malloc.c",
+      "sha256": "1b34a5b1ef797ab2ec49d362f2956e03fdce6e50b47b6e7f53b14e0a2ec7e4ae"
     },
     {
       "path": "source/lindberghrecomp/tools/__init__.py",
@@ -983,6 +983,18 @@
       "sha256": "1944330deb673cbff6e2c1a5b83cf3def0eec3bdf610da9e7b35f140270ff404"
     },
     {
+      "path": "tools/Play HOTD EX (Direct).cmd",
+      "sha256": "1af2d065fe3e7a3bfa086f1fdc6b714e100f7e319d47da27c20c1444a4040a92"
+    },
+    {
+      "path": "tools/Play HOTD EX.cmd",
+      "sha256": "fd86e11c90dae567155f9d94ddb224232fa044803f4133bab43664a0d7b8a12a"
+    },
+    {
+      "path": "tools/Settings.cmd",
+      "sha256": "38ce77c18a9f7d95f1c8b6c6177ea4ea04167da621c44c00a8074016209d9a50"
+    },
+    {
       "path": "tools/build.py",
       "sha256": "987e73c4231eeabecd76f5a0333f430ce085a3259e5cd91d1c3f4f55965c5a43"
     },
@@ -1011,20 +1023,12 @@
       "sha256": "5765c86fe01ba6524679c7f8870cd4ba4773a0c427c264f1c971d10557b6e756"
     },
     {
-      "path": "tools/Play HOTD EX (Direct).cmd",
-      "sha256": "1af2d065fe3e7a3bfa086f1fdc6b714e100f7e319d47da27c20c1444a4040a92"
-    },
-    {
-      "path": "tools/Play HOTD EX.cmd",
-      "sha256": "fd86e11c90dae567155f9d94ddb224232fa044803f4133bab43664a0d7b8a12a"
-    },
-    {
       "path": "tools/python_deps.py",
       "sha256": "a9dc03d9fabb4130d52ffe06968e5d21477f32a350c3e4cc0bc41ca262edb405"
     },
     {
-      "path": "tools/Settings.cmd",
-      "sha256": "38ce77c18a9f7d95f1c8b6c6177ea4ea04167da621c44c00a8074016209d9a50"
+      "path": "tools/setup_paths.ps1",
+      "sha256": "a8d65f8257a4bb2ae69c5a800a1b91f4121e0c23338feab7ebf8bb2ce583b137"
     },
     {
       "path": "tools/setup_support.ps1",
@@ -1035,12 +1039,28 @@
       "sha256": "312c88b19e51cd0b3d45d4fb5673bd9627935ce4994d37427167ff35f3e6567e"
     },
     {
+      "path": "ui/Play HOTD EX (Direct).cmd",
+      "sha256": "a7f0744866934f2fabc67de79760b6a193aed30abee23de3d7365155b44ef104"
+    },
+    {
+      "path": "ui/Play HOTD EX.cmd",
+      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
+    },
+    {
+      "path": "ui/Settings.bat",
+      "sha256": "74cee0e55f63d81ce98250a1b9122878d6439d9b2b40781d03af00034b5e39f8"
+    },
+    {
+      "path": "ui/Spela HOTD EX (Skrivbord).bat",
+      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
+    },
+    {
       "path": "ui/config_menu.ps1",
       "sha256": "d26afb8a4bb640f0678b46707ba2ddbf00c498fe2802c0fab8d7189b0323d74a"
     },
     {
       "path": "ui/hotd-update-version.txt",
-      "sha256": "6bf25061d3caea72d34f961997d35aca8c8d960aaddac2413516882e6706c97e"
+      "sha256": "aaeebc6ab5b9dd80bca452ec7a63a7175f6e9ce9b81b34a66c85e94a5e4d38ec"
     },
     {
       "path": "ui/hotd-update.ps1",
@@ -1069,22 +1089,6 @@
     {
       "path": "ui/lindbergh.ini",
       "sha256": "c7eff1024f5feff2cf7ca15058eae027affded82073c8bf39b7e5d8695f6265a"
-    },
-    {
-      "path": "ui/Play HOTD EX (Direct).cmd",
-      "sha256": "a7f0744866934f2fabc67de79760b6a193aed30abee23de3d7365155b44ef104"
-    },
-    {
-      "path": "ui/Play HOTD EX.cmd",
-      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
-    },
-    {
-      "path": "ui/Settings.bat",
-      "sha256": "74cee0e55f63d81ce98250a1b9122878d6439d9b2b40781d03af00034b5e39f8"
-    },
-    {
-      "path": "ui/Spela HOTD EX (Skrivbord).bat",
-      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
     }
   ]
 }

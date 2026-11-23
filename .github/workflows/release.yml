@@ -13,7 +13,16 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  windows-checks:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test remembered Setup folders and Browse controls
+        shell: powershell
+        run: ./.release/test_setup_paths.ps1
   publish:
+    needs: windows-checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

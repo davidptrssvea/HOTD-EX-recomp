@@ -2,7 +2,7 @@
 
 Build the Windows desktop port on your own PC using your own extracted arcade dump. This package contains source, scripts and launcher UI only. It contains no arcade executable, generated game code, game assets, screenshots, movies, audio, textures, cabinet save or prebuilt game executable.
 
-**v1.1.0:** adds an in-game pause menu, configurable controls, separate lightgun/Sinden settings and the original arcade Test Menu. Includes the existing verified menu updater. See [PRIORITY-CHANGES.md](PRIORITY-CHANGES.md) for details and test coverage.
+**v1.1.1:** remembers the last successful dump and installation folders in manual Setup, with editable paths and Browse buttons. Includes the pause menu, control/lightgun settings, optional arcade Test Menu and verified launcher updater from v1.1.0.
 
 **[Download the Windows builder](https://github.com/davidptrssvea/HOTD-EX-recomp/releases/latest)** Â· [Release notes](RELEASE-NOTES.md) Â· [Test coverage](BUILD-VERIFICATION.md) Â· [Report an issue](https://github.com/davidptrssvea/HOTD-EX-recomp/issues)
 
@@ -96,3 +96,9 @@ The main menu checks GitHub for the latest stable release in the background. Ope
 The update replaces the launcher and runtime files. It keeps settings, control/device profiles, cabinet saves and the existing game dump. The update folder beside the installation holds the Setup log and the previous versions of replaced files. Internet access and free disk space for a local build are required.
 
 To add the updater to an installation from an earlier release, run this builder's Setup and select the existing installation folder. Close the game before updating. The updater is available from the launcher; it is hidden while the game is paused.
+
+## Remembered Setup folders
+
+Manual Setup remembers your last successfully used **arcade dump** and **installation** folders, separately for HOTD4, Special and EX. Both paths are shown in the opening dialog; edit them or use **Browse** beside either field. Cancelled/failed builds and validation-only runs do not replace the last successful choices. Explicit command-line paths still take precedence, and the launcher updater remains automatic and does not change this history.
+
+Folder history is stored locally in `%LOCALAPPDATA%\HOTD-Setup\Normal.json`, `Special.json` or `EX.json`. It contains paths only. A deleted/moved dump can be replaced using Browse; a corrupt history file falls back to the usual defaults. Settings and cabinet saves remain in your installed game folder.
