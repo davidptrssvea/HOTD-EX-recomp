@@ -1,0 +1,207 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="The House of the Dead EX" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual"
+ Background="#08090B" Foreground="#F0EFEB" FontFamily="Segoe UI" Left="0" Top="0" Topmost="True" UseLayoutRounding="True">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="#F0EFEB"/>
+            <Setter Property="Background" Value="#AB181A20"/>
+            <Setter Property="FontSize" Value="21"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Margin" Value="0,0,0,9"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="19,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="#80585960" BorderThickness="1">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#D77A2127"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#FA745C"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#D77A2127"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#FA745C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#A13936"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ChapterButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,7"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Margin" Value="0,6,0,21"/>
+            <Setter Property="Padding" Value="12,0,6,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#F0EFEB"/>
+            <Setter Property="Background" Value="#25252D"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Focusable="False" ClickMode="Press"
+                                IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="#25252D" BorderThickness="1" BorderBrush="#80717A">
+                                            <Path Data="M 0 0 L 5 5 L 10 0" Stroke="#F0EFEB" StrokeThickness="1.5"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="Selection" IsHitTestVisible="False" Margin="12,0,35,0" VerticalAlignment="Center"
+                                Content="{TemplateBinding SelectionBoxItem}"
+                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+                            <TextBox x:Name="PART_EditableTextBox" Visibility="Collapsed" Margin="11,1,32,1" Padding="0"
+                                     VerticalContentAlignment="Center" Background="Transparent" BorderThickness="0"
+                                     Foreground="{TemplateBinding Foreground}" CaretBrush="#F0EFEB"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                            <Border x:Name="FocusBorder" IsHitTestVisible="False" BorderBrush="Transparent" BorderThickness="1"/>
+                            <Popup Name="PART_Popup" Placement="Bottom" AllowsTransparency="True"
+                                   IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Focusable="False">
+                                <Border Background="#25252D" BorderBrush="#80717A" BorderThickness="1"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ScrollViewer MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter TargetName="Selection" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="FocusBorder" Property="BorderBrush" Value="#FA745C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="#F0EFEB"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="Item" Background="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Item" Property="Background" Value="#7A2127"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+<Grid Name="Backdrop">
+ <Rectangle><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+  <GradientStop Color="#1708080B" Offset="0"/><GradientStop Color="#3308080B" Offset="0.39"/>
+  <GradientStop Color="#DF08080B" Offset="0.68"/><GradientStop Color="#FC08080B" Offset="1"/>
+ </LinearGradientBrush></Rectangle.Fill></Rectangle>
+ <Rectangle><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+  <GradientStop Color="#4208080B" Offset="0"/><GradientStop Color="#0008080B" Offset="0.25"/>
+  <GradientStop Color="#0608080B" Offset="0.62"/><GradientStop Color="#D508080B" Offset="1"/>
+ </LinearGradientBrush></Rectangle.Fill></Rectangle>
+ <Viewbox Stretch="Uniform"><Grid Width="1280" Height="720" KeyboardNavigation.TabNavigation="Cycle">
+  <TextBlock Text="THE ARCADE COLLECTION" FontSize="13" FontWeight="SemiBold" Foreground="#D0C7C2" Margin="74,56,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+  <Border Name="ControlSummary" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="660" Margin="74,0,0,64" Background="#C810141B" BorderBrush="#655B5146" BorderThickness="1" Padding="18,14">
+   <StackPanel><TextBlock Text="CONTROLS" FontSize="12" Foreground="#F07460" FontWeight="SemiBold" Margin="0,0,0,9"/>
+    <TextBlock Name="ControlSummaryText" FontSize="16" Foreground="#F0EFEB" TextWrapping="Wrap" LineHeight="25"/>
+    <TextBlock Text="Start skips movies and instructions. F1 releases the mouse." FontSize="13" Foreground="#ADB4C2" Margin="0,9,0,0"/>
+   </StackPanel>
+  </Border>
+  <Border Name="ContextCard" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="100,248,0,0" Width="510" Background="#DE101218" BorderBrush="#575962" BorderThickness="1" Padding="26">
+   <StackPanel><TextBlock Name="ContextTitle" FontSize="23" FontWeight="SemiBold" Margin="0,0,0,12"/>
+    <TextBlock Name="ContextText" TextWrapping="Wrap" FontSize="17" Foreground="#D0C7C2" LineHeight="27"/>
+   </StackPanel>
+  </Border>
+  <StackPanel Width="398" HorizontalAlignment="Right" Margin="0,65,74,0">
+   <TextBlock FontSize="24" FontWeight="SemiBold" Text="THE HOUSE OF THE"/>
+   <StackPanel Orientation="Horizontal" Margin="0,-5,0,16"><TextBlock FontSize="71" FontWeight="Black" Text="DEAD"/><TextBlock FontSize="71" FontWeight="Black" Text="EX" Foreground="#F07460" Margin="17,0,0,0"/></StackPanel>
+   <Rectangle Height="2" Fill="#BA383C" Width="66" HorizontalAlignment="Left" Margin="0,0,0,22"/>
+   <StackPanel Name="MainPage">
+    <Button Name="Play" Content="Play Arcade"/><Button Name="Options" Content="Settings"/>
+    <Button Name="OtherGames" Content="Other Games" Visibility="Collapsed"/><Button Name="Quit" Content="Quit"/>
+    <TextBlock Text="Arrow keys / Enter to select. Esc to return." Foreground="#ADB4C2" FontSize="13" Margin="0,8,0,0"/>
+   </StackPanel>
+   <StackPanel Name="OptionsPage" Visibility="Collapsed">
+    <TextBlock Text="Settings" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,12"/>
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="146"/></Grid.ColumnDefinitions>
+     <StackPanel Margin="0,0,12,0"><Label Content="Render Resolution" Foreground="#F0EFEB" Padding="0" FontSize="15"/>
+      <ComboBox Name="Resolution" Height="38" Margin="0,5,0,15" IsEditable="True" AutomationProperties.Name="Render Resolution" ToolTip="Choose a preset or type a resolution, such as 2560 x 1440."/>
+     </StackPanel>
+     <StackPanel Grid.Column="1"><Label Content="Display Mode" Foreground="#F0EFEB" Padding="0" FontSize="15"/>
+      <ComboBox Name="DisplayMode" Height="38" Margin="0,5,0,15" AutomationProperties.Name="Display Mode"/>
+     </StackPanel>
+    </Grid>
+    <Button Name="GraphicsOpen" Content="Graphics / Anti-Aliasing..." Height="44" FontSize="18"/>
+    <Button Name="MouseOpen" Content="Mouse / Aim..." Height="44" FontSize="18"/>
+    <Button Name="AudioOpen" Content="Audio..." Height="44" FontSize="18"/>
+    <TextBlock Name="SettingsStatus" Foreground="#F07460" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Button Name="Save" Content="Save and Back" Height="42" FontSize="16" Margin="0,0,8,9"/>
+     <Button Name="SavePlay" Grid.Column="1" Content="Save and Play" Height="42" FontSize="16"/>
+    </Grid>
+    <Button Name="OptionsBack" Content="Cancel" Height="42" FontSize="16"/>
+   </StackPanel>
+   <StackPanel Name="GraphicsPage" Visibility="Collapsed">
+    <TextBlock Text="Graphics" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,12"/>
+    <Label Content="Anti-Aliasing" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="AntiAliasing" Height="38" Margin="0,5,0,16" AutomationProperties.Name="Anti-Aliasing"/>
+    <Label Content="Anisotropic Filtering" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="Filtering" Height="38" Margin="0,5,0,22" AutomationProperties.Name="Anisotropic Filtering"/>
+    <Button Name="GraphicsBack" Content="Back" Height="44" FontSize="18"/>
+   </StackPanel>
+   <StackPanel Name="MousePage" Visibility="Collapsed">
+    <TextBlock Text="Mouse / Aim" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,12"/>
+    <Label Content="Mouse Input" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="MouseMode" Height="36" Margin="0,4,0,10" AutomationProperties.Name="Mouse Input"/>
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock Text="Sensitivity" FontSize="15"/><TextBlock Name="SensitivityValue" Grid.Column="1" FontSize="15" Foreground="#F07460"/>
+    </Grid>
+    <Slider Name="Sensitivity" Minimum="0.2" Maximum="8" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,8,0,14" AutomationProperties.Name="Mouse Sensitivity"/>
+    <Label Content="Extra Mouse Crosshair" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
+    <ComboBox Name="Crosshair" Height="36" Margin="0,4,0,14" AutomationProperties.Name="Extra Mouse Crosshair"/>
+    <CheckBox Name="MouseGrab" Content="Lock mouse inside the window" Foreground="#F0EFEB" FontSize="15" Margin="0,0,0,12"/>
+    <CheckBox Name="LeaveReload" Content="Reload when the pointer leaves the window" Foreground="#F0EFEB" FontSize="15" Margin="0,0,0,18"/>
+    <Button Name="MouseBack" Content="Back" Height="44" FontSize="18"/>
+   </StackPanel>
+   <StackPanel Name="AudioPage" Visibility="Collapsed">
+    <TextBlock Text="Audio" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,20"/>
+    <CheckBox Name="AudioEnabled" Content="Enable audio" Foreground="#F0EFEB" FontSize="17" Margin="0,0,0,22"/>
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock Text="Master Volume" FontSize="15"/><TextBlock Name="VolumeValue" Grid.Column="1" FontSize="15" Foreground="#F07460"/>
+    </Grid>
+    <Slider Name="Volume" Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,10,0,24" AutomationProperties.Name="Master Volume"/>
+    <Button Name="AudioBack" Content="Back" Height="44" FontSize="18"/>
+   </StackPanel>
+   <StackPanel Name="OtherPage" Visibility="Collapsed">
+    <TextBlock Text="Other Games" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
+    <StackPanel Name="OtherGameList"/><Button Name="OtherBack" Content="Back" Height="44" FontSize="18"/>
+   </StackPanel>
+  </StackPanel>
+ </Grid></Viewbox>
+</Grid></Window>

@@ -1,0 +1,1058 @@
+{
+  "game": "hotdex",
+  "format": 1,
+  "files": [
+    {
+      "path": ".gitignore",
+      "sha256": "593b79510f170f14e385c48310c27cf7f65b0a52f84eb6500dc286a596d6e22b"
+    },
+    {
+      "path": "BUILD-VERIFICATION.md",
+      "sha256": "7cfb3bbaa15eb6f9183e4fd362d4092547088be14ae2b3d7f02bfa45c97249d4"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "969c26f4e5da359fea84127dfecd3057729cfed75211fb324bdb42af6c087614"
+    },
+    {
+      "path": "README.md",
+      "sha256": "cea9928ba038d164179002cc6908ed9a0086c65c2dc3b7d57799d142e67ef8e6"
+    },
+    {
+      "path": "RELEASE-NOTES.md",
+      "sha256": "e950b312f1158618c20c296f50e803b3bef8a1ce2e73fb3baa7bb9edb170d1db"
+    },
+    {
+      "path": "Setup.cmd",
+      "sha256": "d07dcb3fbb6bf5d280d8d7e90d660e81018afe21a2f4163a8740bd5bd30ad45f"
+    },
+    {
+      "path": "setup.ps1",
+      "sha256": "00c21b3dc1d7bdfd5c065bf37f6f9ede444ebec18248942dca9f69b7e862f349"
+    },
+    {
+      "path": "source/CMakeLists.txt",
+      "sha256": "aa1e5604b81aa46e1deb0212f7848caca3768d52660cac08df4fa8a6f9aa4182"
+    },
+    {
+      "path": "source/games/hotdex/src/host.c",
+      "sha256": "3fce221d51c1b07a8540d53b601c96362db906c41039297d98bbbe4afe3d684c"
+    },
+    {
+      "path": "source/games/hotdex/src/skip_media.h",
+      "sha256": "370286df832f31bbeb44622bc36da91878b3b30eaf0140dfd103dd7e4ca58e9c"
+    },
+    {
+      "path": "source/LICENSE",
+      "sha256": "969c26f4e5da359fea84127dfecd3057729cfed75211fb324bdb42af6c087614"
+    },
+    {
+      "path": "source/lindberghrecomp/CMakeLists.txt",
+      "sha256": "83e3e6c22e4c6df6fd93ae63e6941ae35862dd080d06c68e11f72f7a8d4863c3"
+    },
+    {
+      "path": "source/lindberghrecomp/LICENSE",
+      "sha256": "969c26f4e5da359fea84127dfecd3057729cfed75211fb324bdb42af6c087614"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/LICENSE",
+      "sha256": "a03f354a044f9acea7de6044746edb9f4d2c811c185adcc74f985348a36268c9"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/compat/win32_compat.h",
+      "sha256": "94fbf4dbfe3bdbd79ed29ea4a0cec71ba4eca31be92539062f1929b095b4e7e4"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/hybrid/hybrid.c",
+      "sha256": "178c57a203966f05581c8a88e578e22121281907411bc9bbcac588795b74907a"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/hybrid/hybrid.h",
+      "sha256": "7ad7727928f716dd3fa61646e85f82a4a0b04cfe38e222c626a44d70a3a0b902"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/hybrid/hybrid_selftest.c",
+      "sha256": "67014d329f91e6a205f888b37e682b73a7b3bb1d4fefdedb476d3d3dd54bd76e"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/cpu.c",
+      "sha256": "c5c48e92a13f7e580ca81d0f4dc0679a0a038029c166129d0f46d9082002b52c"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/cpu.h",
+      "sha256": "c544874998c1c577a9ab9b54f4d431f5912bda8623f007f7df1a274b917ebfc1"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/cpu_selftest.c",
+      "sha256": "cc7f19439f919fc47bb8691b5737df2ba948fa0dd35ae94ff68e2e090d0cbde9"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/dos_compat.c",
+      "sha256": "b43c50867e968b6e1abc69c75a23daa2be0de2d4c40f3b278b63a4de1f055953"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/dos_compat.h",
+      "sha256": "65cc4dc9e04588ec14b8c7dea600526392302608de4a9752a05dffee130682f4"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/input.c",
+      "sha256": "4a284ce9f4fe88ebf191dc7e439434d4b28205ab5c37802f2c52d2abac5ffc1d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/input.h",
+      "sha256": "656dd4470c59c65c49daf80b0cdb2d68c8bb9a6098dea6d2b96253ccefe72a15"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/timer.c",
+      "sha256": "579d618f3177b792fa62ddad5c38e5a07a443e3c8e14d316b8a58335954a1159"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/timer.h",
+      "sha256": "619bbbfe7bf2df7a96736744ac252089cfb92edfdc61eab58e319e8ef8728a78"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/video.c",
+      "sha256": "f3ae931141938942204f94f858b02d9bae06162a790beac97d41f4b3f1a87095"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/hal/video.h",
+      "sha256": "cfb5a4ae36196b34f0b701eee3fe9888885041ab3d245c2672d862d8fd7e7680"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/platform/font8x8.h",
+      "sha256": "a8bf6c2b8cf41cd3bb391138211fb352d974908d11b6d917af8f170af538157c"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/platform/sdl_platform.c",
+      "sha256": "07619b95c1b86cbe86f06337ba4e8d8ee3298379545513f103e17f8ec7dd6b22"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/platform/sdl_platform.h",
+      "sha256": "60a2f6648d82dcccaf24ad77b5f43aa8ab0fb1af458080f8e8bc349f0f39a0af"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/recomp_trace.c",
+      "sha256": "282eece623e84f7753dcc721d47d7027f22fa38b285856bd8ce69ea9c1d951ec"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp16/startup.c",
+      "sha256": "a74ff8124c6060225f21441d5257b2d63fdda72419c3ee32b91c3b35774ab441"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/crash_report.c",
+      "sha256": "eaeb47bcba3520a5402ddb4074b7d0944024e7446a8190ec98c40f4f281a6c01"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/crash_report.h",
+      "sha256": "2d4ec9ce50291605212c36d9e06e83a2cbe667a591eca8df9d04aa38abfb802e"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/image_loader.c",
+      "sha256": "c56a23a28487c613968b7ae5edeeb802e5efc6b38b45f8e232b7df2adf6d4e01"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/image_loader.h",
+      "sha256": "c041ddc4ed0e2be120b41d981afab93d7188d40eb220035c72187a63cb43475b"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/main.c",
+      "sha256": "1df11acaa2f44a81aa5c248e85555f64fe83858dfd6a30e9b561fba753ed29f4"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/mmx_selftest.c",
+      "sha256": "05c2526e10794169e0179c637c8c611e6a0e2ace7d9725e7fd0cf1b3e7ce21c8"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/recomp_trace.c",
+      "sha256": "2f6305b061fa7706ff282c357b27d0af2d14b035ced273cb91500a23db50bf89"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/recomp_trace.h",
+      "sha256": "59ab96b00d79f572cbadb7ef41844a7651fc3d77ade05bed510201a4695916a2"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32/recomp_types.h",
+      "sha256": "179b2b9fcf9802c61499d55a9590d3118da7d99d1a95549ce47d92b486599a20"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32_cpu/cpu.h",
+      "sha256": "a7234398f4996287904debe4f161fa03278fe6df5d6d19115dd257c62f3ef8ac"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/runtime/recomp32_cpu/cpu_selftest.c",
+      "sha256": "3c3fcd92088492edd8f52540072f4035f30deb9eeff6d928c34ee0e0ed80de68"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/__init__.py",
+      "sha256": "d6f85ef10e172987ce5c15d9d0a869d82a76e7c2f62fc4deb412636773aa1b71"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/__main__.py",
+      "sha256": "72472997e6df055e7f1c7fe47c49e01536e02389a8bfede6b8af09b6aa136725"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/assets/extract_wise.py",
+      "sha256": "760a11d4b30faa2051a303fd23a1c47d6db20df65cc42dbdbfe3fc15d401fbd7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/assets/isextract.py",
+      "sha256": "a2c837bdb0fd9710f52d84d3cdaf625388686e258412fbb680f140fa4317caa3"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/assets/iso_peek.py",
+      "sha256": "d57baa01194e22b3bae559a1f1b46d1484e7645ae52b55830007521aba72ede4"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/assets/pk3_inspect.py",
+      "sha256": "e8f631c5dcffc5588a504c9741f551fac7db55793ca2f9d817e02f83a7898954"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/audit_repo.py",
+      "sha256": "9f22c341f452148633ff790985d75e815966d79cf5ce58b53dc25905d91cccb8"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/classify/classify_functions.py",
+      "sha256": "30525922ee74150ff827b0913b88f6e740c5e84d477dac67fe73503662f9ee73"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/classify/combined_classify.py",
+      "sha256": "3c8ef58aa617dcc9bb5c549ddeb1ca1d94719eb6c6c995e17573482c177a65d5"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/classify/deep_classify.py",
+      "sha256": "0583342ed2938b27a89a7f5fc706850ea241b03669c4f682ff6dfce987717257"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/classify/resolve_stubs.py",
+      "sha256": "3ab8b9d43a286a69d1ac2aa89c51b36d4275ba6cca7397eff7fbd7c03f1079e7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/cpp/cross_mangler.py",
+      "sha256": "394aef6cafa055995a37ab02796f84461239e0ba463973450dbe53953585bac3"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/cpp/mac_unmangler.py",
+      "sha256": "0559b39dda39e8e6fd004c71dec7649da40ec7df31de20a3e104609d7e37c03d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/cpp/msvc_mangler.py",
+      "sha256": "79483f22f1e8b30bc6f7a5a6cc5de597cc5ce13812ef73c0045103191bd7feb9"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/cpp/rtti.py",
+      "sha256": "72fec9d76f188f08473c2fb746645966a0c9b1c35f005338b1afd39d8ca2c752"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/cpp/vtable_scan.py",
+      "sha256": "c59c9d302f6d866860e46d19d468b71871beab0008b53e001ff2d5d1fe1084aa"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/__init__.py",
+      "sha256": "6ce5180991efc85ba4d8b3b887745cfb269f5c15858b468f3591f843b138fae7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/analyze.py",
+      "sha256": "e0aa939cc2d0d5ee3119ae3ab342bc63d995e3daaa811b8c8bdc6d9168f385aa"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/callgraph.py",
+      "sha256": "eee7bb295bc87ae39d4dbec2cb40b1f1de3dab666636fd6ba45fe4053f15fac7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/decode16.py",
+      "sha256": "722ee962c250165600ae336a16e9e6ad4e3210846c8c946638079d361ecebb66"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/disasm32.py",
+      "sha256": "af593439c8c95350e3cf5abc6c9a25d2aa60bac10e9389e61bbf05ce7a171044"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/fpu_decode.py",
+      "sha256": "fa1be051d17cfa01d4150596e8a19318aebe4e0e25119b59e3f4a55b994510c5"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/largemodel16.py",
+      "sha256": "55f22b8ca82cea56f833e593d396b367e90d392204189e109df312f50e83a227"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/score_recovery.py",
+      "sha256": "59c7895cf08003273193cdca5a97d47f728a4e444beae6e16cfc537a2e176b9b"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/disasm/seed_from_log.py",
+      "sha256": "516f3b27d05a55380da9767ed04710349a877df4be2ace89982a4c1e92bf34c2"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/drm/inject_and_run.c",
+      "sha256": "2e7c84bc8392760e6793ef0b0d44c28160a5427f98331d6f202845da1bcbcc36"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/drm/safedisc_dump.py",
+      "sha256": "bb70d17dd5fccc8c494dbb2658d820382e05976510f9b5d9084c1cc24cd6165a"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/datdump/datdump.c",
+      "sha256": "99e48fa9813d302bb8b36bb1de267ebcf76c6eafc65ac25e2e40ea1b58dc7f2a"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/fifdecode/fifdecode.c",
+      "sha256": "71cf0849f903f05841570e31797ff09d199576d067f375572c9d0f1663336c65"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/fifdecode/fifdecode.h",
+      "sha256": "098b05f6871b644e9a191e2c7509d8f68a37854b92ebdf1071733af54126ce89"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/ftcdecode/ftcdecode.c",
+      "sha256": "cbbf4b97a958eea761fd621b5d9dda9d7998cb8b6899ec8bdef7806bd4a2a9d7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/ftcdecode/ftcdecode.h",
+      "sha256": "3f43c04b3afe2e530019dc3922c6773ba34caaa5eaf551762e83e057445d0ede"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/m20dump/m20dump.c",
+      "sha256": "3d68a328de72d538a4515c273cc7af399cb603ba834308b91bf1188a4cf49695"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/m20dump/m20format.h",
+      "sha256": "97ffd379b7d321731cefce2e4225eafc85b64d0e84b8d51cd0e974615698498d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/spamdump/spamdump.c",
+      "sha256": "d5a5ec33c479eb5a8c7033486ee78034dcbbe11aac620aab643fba9b0613c9af"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/formats/strdump/strdump.c",
+      "sha256": "bb72bb8a15caf501bc35198eff23779790b7907647c3f44650e46f15c944792b"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_export.py",
+      "sha256": "0d6e1ae02f1b0dee44ef20f529c98b26b83a114c3dc9e25cb075e63a36353079"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_funcs.py",
+      "sha256": "769c631d37e8853f2f68c9d4ba5d7d4b79f17fb0e454d891205b8f833d971c8d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_probe_segs.py",
+      "sha256": "ba1edc5c086b6b960991ddeabefb24b7b33dc1db49056fa093922f7801b51649"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/ida_xrefs.py",
+      "sha256": "24adcaaf6a63322fc3201ff472b31501633ce1bbc33538a1554739c6fc568205"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ida/README.md",
+      "sha256": "c63a64dd6a1bfbc0a6c1e3d1a5eaa24d5e0621290d200bb11057eb4e48526baf"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/__init__.py",
+      "sha256": "dd42a7e4814562294fd0666eb7c6ebdaef34df8392b2a3c6b105d2d5816bf116"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/difftest.py",
+      "sha256": "a01f0b9c8ddc2cc059e9a62981c32834d4df185d3fc9886512dae70aac7bfffc"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/difftest16.py",
+      "sha256": "923d56e920d0815cb65959a1e9b7f0bc7a314f4b42dfcf9e7d4648755646fc14"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/generate.py",
+      "sha256": "71efb61813b3728c5d7a15590dbe3461d2fb36aedc1fad98d38f4701394a0990"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/lift16.py",
+      "sha256": "7df78c59f6178908c12d9d6cc25809f42dcf1e25e023e23989c2b54a29f723af"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/lift32.py",
+      "sha256": "b98e51ff14fc585eda6845bbb41aa9fc0306991f5d20c50fc2357d24725b5349"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/lift32_cpu.py",
+      "sha256": "87329474c19b0693fba3b1469479bbf830b484fa898716b94d142d5a8545c61c"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/recover.py",
+      "sha256": "9d66adcc29b2be3730b111f1992f1f9086167eeeb7462141971749a42a245f41"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/test_bswap.py",
+      "sha256": "ca27a88ece7a6fb201fa36e0d922e61be70269691cdddca03a59c1e0daf86c7b"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/test_fpu_operands.py",
+      "sha256": "625640b7ac948deaf0f8fed70a92354b2cdbfe08d45b870937bf00b5ecbcde6c"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/test_movmskps.py",
+      "sha256": "cf9a8c2b674819bf92ee170a0d083f7368f347ac84fc0f2cbe3ad0eb95c87eee"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/test_sse2_lanes.py",
+      "sha256": "e1427789173e2945883ab43976630b32aa5357b288e0a31f89a65e044d73b076"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/lift/translator.py",
+      "sha256": "df35235a2a7228a24e49a2ee19714638b79ca9b6042006a0e019735ba3bc77c3"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/__init__.py",
+      "sha256": "14c0e9d40967cf9641cd3933ed613e6dbca1b7e137fd33ac797c0407d3677d32"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/gen_win16_stubs.py",
+      "sha256": "1c0bad4eb852c69eee59561d7167f3ded42a240d43b136f07fb368a655d4d81d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/idt_to_json.py",
+      "sha256": "7de3ecff2d895e1db0b68095e37e1af27567b1e6dafac2c7f370593a993eafb3"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/ne_decode.py",
+      "sha256": "900a2d59fc3c45ac268dba961591545d0271eef2232c6b7bd42758ed523a69e4"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/ne_parse.py",
+      "sha256": "e23c7f32383d7b4cac8f77e2f6604a896b8c08b214b2618210314ab4724be89a"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/ne_xref.py",
+      "sha256": "aa1e0b2e41c36dfd476623997443d29dea6ad00c289af77a5612ca286828128e"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/README.md",
+      "sha256": "4a3e34992e762c8a28a5b5d5c5e00c454b0ca6a652de51c58d97b8b3d0ed5377"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/ne/win16.py",
+      "sha256": "77bb5144891bd308174bd07708fabb0f88a3e3843bf9762a82348749863bbfc5"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/__init__.py",
+      "sha256": "8481a9dcefbf374a6b249139c33c43ce0e5567d5f64b562c2c6e6c856eb8aa28"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/analyze_sections.py",
+      "sha256": "e7b9c919d768a09967c85b143c4b87f76f47cd649fff28e625fb67a0a795ce7d"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/catalog.py",
+      "sha256": "f495ec9f9d10d17eef98fcf8879a202f509f5bb270da953c67bca35a093b497e"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/debug_symbols.py",
+      "sha256": "89d83392482e198795475aaad6588110dc3af7001396924794652be168e6916b"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/delay_imports.py",
+      "sha256": "ca60d965cc3142fd8bc1d7d41395ee692e6274ef23d741b0f1e90162f55f4383"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/extract_imports.py",
+      "sha256": "062e5bce3d00c5da15def5c0ddeeb6551e87af25c568434929e22ebf6d61f425"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/map_names.py",
+      "sha256": "4f027ec6fd55ad6bbf41cd76fb540ad9d061729cf48f30ec5ac186b4ff9a0743"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/merge_names.py",
+      "sha256": "1450bc7ef56378c551d57e63c99dda519520114e8be3e72cf7088c78919dcfb8"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/pe_analyze.py",
+      "sha256": "75760a4a5c6be1e766ac68dc1750f6934049dedb08b7a72159c7c6707ee0d937"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/rsrc.py",
+      "sha256": "ca4f11949be13ac99cc44455206dc2c53bf5f2ced911bb9d418bd68020bc55e7"
+    },
+    {
+      "path": "source/lindberghrecomp/pcrecomp/tools/pe/stdcall_argc.py",
+      "sha256": "ebd1c30cf3dbc25c25704d8a15405244b6ee6fc932cb118665144f075ddcd27e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/achievement_runtime.h",
+      "sha256": "16ea23b235450c63d12158494381276acc0b2dedbfbe27eb03a258f4e4bf6e70"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/arbprog.c",
+      "sha256": "b8cefeda0c3d0f8a289a1ce2d5596f24c2f34bac6b5e002f510e91d26173e4e8"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/arbprog.h",
+      "sha256": "75f44b24ccc3157d2002ad9eff13bb3d9ffc2d98a73dbf5e1bce4d1326aefad7"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/atomic_file.h",
+      "sha256": "1ea08000fcd8df7ff82ac15c97da8e75f316c8801964c76a699cf702562832ec"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/cabinet_buttons.h",
+      "sha256": "e4c9c80853f89894b97cf9dbacd958de41fc20dc03783bb6952c4969433cb223"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/controls_menu.h",
+      "sha256": "72558e0dadb9f10af45bf567f3b2dba460624499511cf0f1ec479f3fd83bbe17"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/coop_mouse.h",
+      "sha256": "c829496e7e5be4dc21d78ccec5e8408e7e60c30c1fde8a562db5bef181c2fe3e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/crash_report.c",
+      "sha256": "93d4f7b1fd2608e0db191e9cbd458188bd87ff646785c2b94d41d72da4c261e4"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/dispatch.c",
+      "sha256": "565db8b4f382c1b04ccc188b9a0737ee09951732a7a8bd2b25519c053a428430"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/display_cadence.c",
+      "sha256": "1c6b3b20a0d920fa0b7922c573fb18c0c768575979a0dcd0fd381316ce643f83"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/display_cadence.h",
+      "sha256": "54edd49f13cc61a51555bb130758d34195714828d49f921ee5d01af7e4a90f8d"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/frame_timing.c",
+      "sha256": "d105f85f4c468012455d382844a452e110553455f946d00eac0ac56a1040eb1b"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/frame_timing.h",
+      "sha256": "37d5b4ac2ccac461f9fffeeb724bc09b1e73f185bcff794b715dc12eb6e5caab"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/game_profile.c",
+      "sha256": "54c906a6dfb4036493b02bdff9754dd83cd65f5c586f18819194e8d8400549b0"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/game_profile.h",
+      "sha256": "0ce834c5c8b07b38ad008994843995d856d4307fc237acf5532d1972970ffd48"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/game_states.h",
+      "sha256": "caa9cf344da1d0f04c004d8a4feaa9e92722f64eda6976c4c6518ecde2b10e86"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/gameplay_options.c",
+      "sha256": "7e31a1d088965e186523d18ae6d826868cf9ded0ceeff64190967084306e5d73"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/gameplay_options.h",
+      "sha256": "34a17c2733c4388d7ff4efa93a0944ccb278f1d1062bd069f26f2c738940c178"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/gl_posix.h",
+      "sha256": "ea81d20eb4d275fb831686f6554d5deaf7b0d243ff32a70b570d58a810e9a424"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/gl_thread.c",
+      "sha256": "008b7e95e135b604da33346b16baeeae8d3eecaca9f1165daafd93e74afdfd4c"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/glsl_compat.c",
+      "sha256": "de0db4a20ce5244e563f6af533d8f30fd2555329b61f9040f5f3f4bb12aaf2ba"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/glsl_compat.h",
+      "sha256": "08301bd183f8e688e292c4ce50ec383f8231c8e38e4dfc1e5db4b232bdd0c7e2"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/glsl_pp.c",
+      "sha256": "ab3a7d614a26c943bce235d43704e140f69805d6fe8698dc17c783bc39c86056"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/glsl_pp.h",
+      "sha256": "ac72adb3705659f696c392a82989f1809aaa3d63cc3d948d0550142debc43493"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/guest.c",
+      "sha256": "c52ff132d85461b5456e606a44976ab9f57915c325ac1a8e7a0f1fdd8be776e1"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/guest_mem.c",
+      "sha256": "923ff4d4c095489368f847249eeaf25735a37b8d504e7f7083600777435d16df"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/high_scores.h",
+      "sha256": "c772816dbf2e1914dd92c3f88ca9571979c3923d85ce630b220de1f3f04372f0"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/high_scores_ui.h",
+      "sha256": "fe5d3621d28d68373a1849baacafdfe5bf8b7d63385b3c93c40ed9853102cc7d"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle.c",
+      "sha256": "79b1ab707d3be65ec834f7af83d0603b669cefc1789bd5af6a5d4c88c3662bb2"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_alsa.c",
+      "sha256": "fceef8ce7732c90d25e82d854e38ad9ce94e92a314936732c68507136f68721b"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_cg.c",
+      "sha256": "9e8a63243d62e4f12121b348dcbc21c0f15d921a081ebdcea6defd918f7ad1bb"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_cxx.c",
+      "sha256": "31cbe70c56e64481c6d824d1791fa56ca57140ae7b4192a9e38971e966086bcf"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_gl.c",
+      "sha256": "bce32579bdeab3747dedc934519b2c36de1b4d57e08236187e57de5e7c6070a1"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_gl_posix.c",
+      "sha256": "e7458991042e81c3fd99fbec2780fa4c9fb99abb92b7d1979530c71ada0bb39e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_glut.c",
+      "sha256": "cfb19e8afeb5f46dd9ef1378ef732a6dbf69dfb4fe141749eb60ea5a9fa0daff"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_glx_posix.c",
+      "sha256": "5c1dcca0e5a98940729778516fa14e2c2cf2f79549314ddbcb2d2d70459f59af"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_libc.c",
+      "sha256": "614558bd0972419c3ca323e7ca4bcba4508a72db6ecd23176894f44b9201b04b"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_matrix.c",
+      "sha256": "2ea66b5631ce2e7abb751b153856e8ceaadbbe8d3df73571617e74d69e676bc5"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_openal.c",
+      "sha256": "5d8962b2094a1d054873dd3a88defecd2b774b01745291cdef71369e24e0aa6b"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_pthread.c",
+      "sha256": "70b205862bbf80138d1f491a07a58d21235431dbea9d5a3d58eb4ba5d8e5a478"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_rideboard.c",
+      "sha256": "2d48b1243bac15a44a19c1143fac61a4b11d320d63a3a3730e2c90cfe7e51685"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_sega.c",
+      "sha256": "1554af5519c062d45a9350b86afe2e17d91b6945fa69b6bc6e0e0bdb0701a4ee"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_segaapi.c",
+      "sha256": "26b26239f415232353ec571904dd9c3ccb327217f39af99f4432effeedf14a53"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_vidmode.c",
+      "sha256": "0cdb77c3538aba7bd98c5d6c0f022b4749ff2e28a9a97be1be9a1baadc72e388"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_window.c",
+      "sha256": "6cd14eb1a74c15f1fce9d25e0a448df7f69ba456894ef5bb75a59bdb6ce92e94"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hle_zlib.c",
+      "sha256": "4699ef6b880da9ce60c6e1db5928f30fd2eda97c9f39718b31b01d1d47c35a83"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_menu_mac.m",
+      "sha256": "f090023acf2c381a421e6111e0157739df30590428e068ba6585b80e180186f3"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_sdl.c",
+      "sha256": "c783a1e6c5c8a6831a5d701385a2c3036860b2bd40cfd19359fc6f206ba8773c"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_settings.c",
+      "sha256": "5db2549017e6b0a415dbad162d408c69b177fb84ed90339bd1b7c8c724468d7f"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_settings.h",
+      "sha256": "293272104ab54434669d249bf9800e0033b042dbf29f0b76b751972d28058929"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_stats.c",
+      "sha256": "3fb38f6112593d2f3b3ef28eaa05257010c8ff27e18cc0e3b027bc9d8478ccf9"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_stats.h",
+      "sha256": "f1ad3a98e721eb57735213733a4dd5dd9aa4d73a705dd65feb30ace9db423193"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/host_xr.c",
+      "sha256": "628d5129977257b88829c3eb4a7dc564b965bf0b96d426d0ff499e4dae7b7c72"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hotd4_controls.h",
+      "sha256": "06b74788f4cac5dacec90413bc408c531894a7d2c5e5c0985a61ad72af877b76"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/hud_widen.c",
+      "sha256": "950a231e0bfc2a68c02f69c64886a49e5e176b7566004d239937a756255a5d3a"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/input_options.h",
+      "sha256": "8d2ae0c947146310557558e3ac87ca386f15d80c01a280d4d0596216e1672c11"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/lindbergh_rt.h",
+      "sha256": "6ca503efd8202cc0000f32b3bc51030475b55e8034e09e2c652052fc6de30057"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/mouse_shake.h",
+      "sha256": "30047f678eaffc3e3b4c5c859dcf3a4ecb86e51acafdc5f9fdac008fac8b6508"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/native_crosshair.h",
+      "sha256": "62b79f346b225896d72652f97f5016a7384e6d3bdfa716347219060fd1d16510"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/nn_culling.c",
+      "sha256": "5ba449725a37b093659d5d3d2a2c0e006e9f6951ceebdfc74fbed4cec877f380"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/nn_culling.h",
+      "sha256": "8659ee3971683880137f5fd1d26a56a48833e526f6ffa6770ef2ffea6701e4fc"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/overrides.c",
+      "sha256": "4ebb1987ac5ca2880b624358fc63d7bd8ebc441e89bd16b4477fbc30bc17ae17"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/photo_camera.h",
+      "sha256": "8adc220ea6f8817f95daaade3f89c4229dba48f9646f5397f491b230eb9842e2"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/photo_filters.h",
+      "sha256": "919939cbcbfff73a14592bd3f330ef9d21648a927330c504f88e0f1f31fb0115"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/photo_mode.h",
+      "sha256": "1dab80af0dc162d9a6b83fe18d6ff169b07b3d08bdfb90c829b4d42ead741bee"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/posix_compat.h",
+      "sha256": "788fb8d8516c24a4e63929716836ae62eb4991c8f7ce52f7c818dfef9103c24f"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/render_queue.h",
+      "sha256": "39c9c369b044d942674bdc13141b32edc0837106bfd1114121e7146e5fcdc9bf"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/sinden_border.h",
+      "sha256": "5d6905f2e551b03dc7ef33d3ce237479f60865da0b5a57a9d8ed978a2bae9616"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/solib.c",
+      "sha256": "3d808e4ade66dafdc7bddef0ab89813f148e9c990a1a67d9c86502247592db5d"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/solib.h",
+      "sha256": "8a413ce3fb2ff16ff98a4c120a2e1b620d37fac6801e0e947af4dc0d01e061aa"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/solo_player.h",
+      "sha256": "7d399b431d10fad8e99fa8057a95f51ba973fc66b7e63018679022b7a7b7862b"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/stereo.c",
+      "sha256": "c3f9e10148fa971ccbb4ca5aae767db0c101e7329b24963b8af4e7d62d701bbf"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/stereo.h",
+      "sha256": "728c4cefbcdfcf907b481f9f27184bc1a02e25d747f65a010d49d7f2225d481c"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/stereo_projection.c",
+      "sha256": "8d33dc5845fc64c3ce1df8f117266f0843f59ad086b78620d94981f0b78a0ae0"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/stereo_projection.h",
+      "sha256": "284ace482cf09ba409b75bfabd81291aef3416215bea84cc75da752a3797f197"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/syscall.c",
+      "sha256": "90296878bd4122c5fec3d49769ff4bfbf7a78289a4083eb083f4554985dbe860"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/trophy_gallery.h",
+      "sha256": "a796d8dce84bf8a6b0c3752ed6687d4e36e16b9bbbb9436050c146e1a9e8bd21"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/vulkan_host.h",
+      "sha256": "efd93097cb0082ba2f865e961753243c837a51949efdb3fc362c7a1aac6e71ee"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_actions.c",
+      "sha256": "a98cd0a2c7b2d50bc53d50d1ae9b0a69982746e7938a950e5834b6339e8622ce"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_actions.h",
+      "sha256": "315b10b1c55e51fb790b2c643e16e76f35f5c645b25c1d885bc33e2e3c83d0be"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_controls.c",
+      "sha256": "a7d92752b5f8239f76a6e9829c2403f49c331e4c95480a8228643fcfbe438cfb"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_controls.h",
+      "sha256": "a8d0f8ac4c7536a0da3ee3124a92a402aa42fe901e7e01f2bebdc6ed9c5b95f6"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_font.h",
+      "sha256": "5b7250910a587a8e13e922bc408c5a9abf3a5d4834bc8e69370c723186191397"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_gun_gs.h",
+      "sha256": "676ea6a4f799e0e2b261638662ba67c639c5456d3c62e997f773d86a9067ce5f"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_gun_model.h",
+      "sha256": "bf2ed34c3691cfdbe0ea439672e4fe6642e976e5586839507946a8e826d0ffce"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_gun_tp9.h",
+      "sha256": "62fd606bf12d5fc89a0ce2f1706dd7d8b449e7a38a4ee07ca5cadd1776889d6c"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_menu.c",
+      "sha256": "cf3e75f3a2ff8230e982f33b53630fe27f41c3d6a2d06b143bfee59851e465e2"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_menu.h",
+      "sha256": "5ece6ffc5a0e19f208a7f2d5bad49aad56437e6863b45065c6916d60249012ad"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_overlay.c",
+      "sha256": "cee12549308e2514b28126e9d6a30cb280fe7b982361a85891b3a58cfb763b38"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_overlay.h",
+      "sha256": "34f46d45ed4e7b31821247ff1fdc3ca2cdf2921532f9efca024fd6b60683fc6c"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_overlay_geometry.c",
+      "sha256": "0e9755902a8efd4ea108e7e5ab650a62fe932fcb69f32bd9f1fbb5f31a1cde3e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_overlay_geometry.h",
+      "sha256": "3a05276b8105693fd5f314c79898539aa2a9ad00fe223efce735f74a8e6f5b8e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_panel.c",
+      "sha256": "9803eaf47cd112e492e857560201305fb0ef6c702a82c7239a07efcddf3e1bf1"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_panel.h",
+      "sha256": "e8af668ffe1ee9dc33d58b0895e15a243347f7e9026c7ea01614f15db74b08ef"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_settings.c",
+      "sha256": "7aa6bc327fcbd6d86d20f1be93253f46851ba7d1484c88119fb152eeeb10014e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_settings.h",
+      "sha256": "d70a6c9bc3923d51275c5392a5f776361743420139843a55c88bbb8b715f4f9e"
+    },
+    {
+      "path": "source/lindberghrecomp/src/runtime/xr_sight.h",
+      "sha256": "dac08733326888d59976673a2aa2fae783b1d5c3beb1de3fe2e5b0e16a672dae"
+    },
+    {
+      "path": "source/lindberghrecomp/third_party/dlmalloc/malloc.c",
+      "sha256": "1b34a5b1ef797ab2ec49d362f2956e03fdce6e50b47b6e7f53b14e0a2ec7e4ae"
+    },
+    {
+      "path": "source/lindberghrecomp/third_party/LICENSE-DejaVu.txt",
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/__main__.py",
+      "sha256": "0eb3f8bc2192491ddba4720d453b5c7b87283083fff7de264438be50b16b0a78"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/disc/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/disc/carve.py",
+      "sha256": "c31c9b8835dec83d5096e21d31a3b33a61091870a3c1f365a48571a0bf1c7c38"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/disc/test_carve.py",
+      "sha256": "29af297bdf8a27e86e9899aa00dd9db5a6109a7308e195803dbd6bc93c026f2e"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/elf/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/elf/elf32.py",
+      "sha256": "447618a96264b810decf09ee0b84df381f2a5c6359c000a29516c92f6db25e85"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/elf/test_elf32.py",
+      "sha256": "53ae369bec24287cef0e417fd13d955f52b16a983ced8c0bb1fd9cefa87cf34c"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/gen_gl_thunks.py",
+      "sha256": "4bb4aa3f0e760f86ac4f284c5eb8f611f24ad66a18c666bce13b16d50bc2ce23"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/__init__.py",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/bounds.py",
+      "sha256": "be423f1461cd1122768212127323a8a7675ccb3059e8ea8924ef09ae5835076f"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/driver.py",
+      "sha256": "4b2ba39e23c5d49831966f75903582a0d0bc01f27ac1746cb7bc615d14bc02cc"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/flags.py",
+      "sha256": "175093cf7aeaf5cc81d265376400a0e20b1b7848a05ed8b47c2b7dbeca5cea54"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/regcache.py",
+      "sha256": "d749116b948cc4cdbb864e6bace49313530e9e83e46e85176028bbd346ccd074"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/solib.py",
+      "sha256": "f617ba95991b7cd23f2aa8483292be417df714146beca0dfdf273104ae975ff1"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/recomp/test_driver.py",
+      "sha256": "6f3a05eaa93321aad9617fb80e827439bf1c1e438b9dd4ebfd1949196fa7f9e5"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/build_fixed.py",
+      "sha256": "0ed817b6c67c6b3775fc43d48db210966c0d7bbbe1472eaf5a865b5c0754407f"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/compile_shaders.py",
+      "sha256": "34051e04cd024bf62bc2f07e83818252c991e46e2a55737d4144adccd8e69565"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/frame_timings.py",
+      "sha256": "7f5fbe7f216c8ea43692d8c615320f12e4c6ca53a81c489b9833ab26936d6dc0"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/gen_abi.py",
+      "sha256": "ecf712cdc036c47d369b3bf7e8eb06dfc4c9cc78a3e53a3997bd9c9aeb6cb6df"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/pack_shaders.py",
+      "sha256": "f088c53eaac42b89187b946d736c90ff32cc9c72b213f57bf461da56884f34c9"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/submission_timings.py",
+      "sha256": "669a88d0e57e3be7f8f5e037659482edffab4fb9cac884a2c8d7a91a1527b23d"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/test_android_emulator.py",
+      "sha256": "8104b65a1d8b63e651b3353b155b14d8912d819654ca2eb3da9ef1bb31a2a5cd"
+    },
+    {
+      "path": "source/lindberghrecomp/tools/vulkan/test_quest_probe.py",
+      "sha256": "1944330deb673cbff6e2c1a5b83cf3def0eec3bdf610da9e7b35f140270ff404"
+    },
+    {
+      "path": "tools/build.py",
+      "sha256": "78160f5aba7c1f8097464f72503d7a7460bf341855063e18630384c8f2620d3b"
+    },
+    {
+      "path": "tools/build_support.py",
+      "sha256": "74739ce2f9172ab2e02d9acfb8efc3781f66edd004dc5200fb1e0a1fda2a37bd"
+    },
+    {
+      "path": "tools/dump-files.json",
+      "sha256": "be0c5b40224437db9712d34d53866f1815bc675d452549c85ec6a1620afaca8d"
+    },
+    {
+      "path": "tools/gl-enhancements.h",
+      "sha256": "e24a04ca7e795eb9556f948ce3708539ec27534d9b69eaaacdfc4a7999637e48"
+    },
+    {
+      "path": "tools/gl-overrides.json",
+      "sha256": "6054be5fb8edbc754f89640cf14f9f81afefea9d1f9c3013e3772f187a071afc"
+    },
+    {
+      "path": "tools/menu_background.py",
+      "sha256": "25ca1f8662d72eca9ac466e77459ebe61e8727eaffbf14ad27650eddb9eba4c7"
+    },
+    {
+      "path": "tools/Play HOTD EX (Direct).cmd",
+      "sha256": "1af2d065fe3e7a3bfa086f1fdc6b714e100f7e319d47da27c20c1444a4040a92"
+    },
+    {
+      "path": "tools/Play HOTD EX.cmd",
+      "sha256": "fd86e11c90dae567155f9d94ddb224232fa044803f4133bab43664a0d7b8a12a"
+    },
+    {
+      "path": "tools/python_deps.py",
+      "sha256": "a9dc03d9fabb4130d52ffe06968e5d21477f32a350c3e4cc0bc41ca262edb405"
+    },
+    {
+      "path": "tools/Settings.cmd",
+      "sha256": "38ce77c18a9f7d95f1c8b6c6177ea4ea04167da621c44c00a8074016209d9a50"
+    },
+    {
+      "path": "tools/setup_support.ps1",
+      "sha256": "b252acc6d2e390caefc2ed7061f7ae7504107c7ededbae3b707d8d144568c7e7"
+    },
+    {
+      "path": "tools/windows-launcher.cs",
+      "sha256": "312c88b19e51cd0b3d45d4fb5673bd9627935ce4994d37427167ff35f3e6567e"
+    },
+    {
+      "path": "ui/config_menu.ps1",
+      "sha256": "cadea73b29e43ddb48988aa6bbc0c3359382f49d5549d03bbb75a05a990e06bf"
+    },
+    {
+      "path": "ui/hotdex-config.ps1",
+      "sha256": "4f456a30ef543551f2955060b29808a0dd451243a8acb1212db2e0b23dd5c0b3"
+    },
+    {
+      "path": "ui/hotdex-launcher.ps1",
+      "sha256": "2b8502703d43aef47d946d4ad773e73d308ea2d217f5d5b33ee8f5fa60e58be3"
+    },
+    {
+      "path": "ui/hotdex-menu.xaml",
+      "sha256": "4fbf88e548df41865f847984dc8ed22aa2b03203c660d49937ffbe932db85b5f"
+    },
+    {
+      "path": "ui/hotdex-startmenu.ps1",
+      "sha256": "9a7ac39ce473f2f0e80b565d6dbade896eb4c1bf02e2aed0a64b8064f42d10f4"
+    },
+    {
+      "path": "ui/lindbergh.ini",
+      "sha256": "c7eff1024f5feff2cf7ca15058eae027affded82073c8bf39b7e5d8695f6265a"
+    },
+    {
+      "path": "ui/Play HOTD EX (Direct).cmd",
+      "sha256": "a7f0744866934f2fabc67de79760b6a193aed30abee23de3d7365155b44ef104"
+    },
+    {
+      "path": "ui/Play HOTD EX.cmd",
+      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
+    },
+    {
+      "path": "ui/Settings.bat",
+      "sha256": "74cee0e55f63d81ce98250a1b9122878d6439d9b2b40781d03af00034b5e39f8"
+    },
+    {
+      "path": "ui/Spela HOTD EX (Skrivbord).bat",
+      "sha256": "fc2c0cfeebba39b2e104c7e13f6117bc1224495637dabff21f78472b654556af"
+    }
+  ]
+}

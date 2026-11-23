@@ -1,0 +1,216 @@
+/*
+ * guest.c - put a Linux/i386 process where the recompiled code expects one.
+ *
+ * Lifted code holds real addresses in its registers, so the game's segments
+ * have to live at the virtual addresses it was linked for. A Lindbergh ELF is
+ * ET_EXEC linked at 0x08048000, which is free in a 32-bit Windows process, so
+ * this reserves it outright rather than relocating anything.
+ *
+ * Only PT_LOAD is honoured. The real kernel also honours PT_INTERP and hands
+ * off to ld.so; here there is no ld.so, because every library the game would
+ * have loaded is answered by hle_call() instead. Nothing needs relocating.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
+#include "lindbergh_rt.h"
+
+#define PT_LOAD   1
+#define PAGE      0x1000u
+/* Windows reserves address space in 64 KB regions whatever the page size is. */
+#define GRAN      0x10000u
+#define STACK_TOP 0xBFFF0000u     /* about where Linux/i386 puts it, 64 KB aligned */
+#define STACK_SZ  (8u << 20)
+
+static uint32_t g_entry;
+static uint32_t g_brk;
+static uint32_t g_stack_pointer;
+
+uint32_t g_image_delta = 0;       /* cpu.h's GVA(): we map where it asked */
+
+static void *reserve(uint32_t addr, uint32_t size)
+{
+#if defined(RECOMP_GUEST_BASE) && defined(_WIN32)
+    return VirtualAlloc(G2H(addr), size, MEM_COMMIT, PAGE_READWRITE);
+#elif defined(RECOMP_GUEST_BASE)
+    /* The whole window is already mapped read/write (guest_mem.c); a
+     * "reservation" is just a range inside it. */
+    (void)size;
+    return G2H(addr);
+#elif defined(_WIN32)
+    return VirtualAlloc((LPVOID)(uintptr_t)addr, size,
+                        MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#else
+    void *p = mmap((void *)(uintptr_t)addr, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, -1, 0);
+    return p == MAP_FAILED ? NULL : p;
+#endif
+}
+
+static uint32_t rd32le(const unsigned char *p) {
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+/* Data the game takes from libc by copy relocation (R_386_COPY): stdout,
+ * stderr and the like. The dynamic linker would copy libc's value into the
+ * game's own slot; there is no libc here, so the slot stays zero until a
+ * handler fills it. Recorded by name so hle_libc can. */
+#define MAX_COPY 16
+static struct { char name[32]; uint32_t va; } g_copy[MAX_COPY];
+static int g_ncopy;
+
+static void scan_copy_relocs(const unsigned char *img, size_t len)
+{
+    uint32_t shoff = rd32le(img + 32);
+    unsigned shentsize = img[46] | (img[47] << 8), shnum = img[48] | (img[49] << 8);
+    if (!shoff || shoff + (size_t)shnum * shentsize > len) return;
+    for (unsigned i = 0; i < shnum; i++) {
+        const unsigned char *sh = img + shoff + (size_t)i * shentsize;
+        if (rd32le(sh + 4) != 9) continue;                         /* SHT_REL */
+        const unsigned char *symsh = img + shoff + (size_t)rd32le(sh + 24) * shentsize;
+        const unsigned char *strsh = img + shoff + (size_t)rd32le(symsh + 24) * shentsize;
+        uint32_t off = rd32le(sh + 16), size = rd32le(sh + 20);
+        for (uint32_t r = 0; r + 8 <= size && g_ncopy < MAX_COPY; r += 8) {
+            uint32_t where = rd32le(img + off + r), info = rd32le(img + off + r + 4);
+            if ((info & 0xFF) != 5) continue;                       /* R_386_COPY */
+            uint32_t sym = rd32le(symsh + 16) + (info >> 8) * 16;
+            const char *nm = (const char *)img + rd32le(strsh + 16) + rd32le(img + sym);
+            snprintf(g_copy[g_ncopy].name, sizeof g_copy[g_ncopy].name, "%s", nm);
+            g_copy[g_ncopy++].va = where;
+        }
+    }
+}
+
+uint32_t guest_copy_reloc(const char *name)
+{
+    for (int i = 0; i < g_ncopy; i++)
+        if (strcmp(g_copy[i].name, name) == 0) return g_copy[i].va;
+    return 0;
+}
+
+int guest_load(const char *elf_path, int argc, char **argv)
+{
+#ifdef RECOMP_GUEST_BASE
+    if (guest_mem_init() != 0) return -1;
+#endif
+    FILE *f = fopen(elf_path, "rb");
+    if (!f) { perror(elf_path); return -1; }
+    fseek(f, 0, SEEK_END);
+    long len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    unsigned char *img = (unsigned char *)malloc((size_t)len);
+    if (!img || fread(img, 1, (size_t)len, f) != (size_t)len) {
+        fprintf(stderr, "%s: short read\n", elf_path); fclose(f); return -1;
+    }
+    fclose(f);
+
+    if (memcmp(img, "\x7f" "ELF\x01\x01", 6) != 0) {
+        fprintf(stderr, "%s: not a 32-bit little-endian ELF\n", elf_path);
+        free(img); return -1;
+    }
+    g_entry = rd32le(img + 24);
+    uint32_t phoff = rd32le(img + 28);
+    unsigned phentsize = img[42] | (img[43] << 8);
+    unsigned phnum     = img[44] | (img[45] << 8);
+    /* Reserve the whole image span in ONE call, then copy the segments into
+     * it. Reserving each PT_LOAD separately looks right and is not: Windows
+     * rounds a reservation's REGION up to the 64 KB allocation granularity,
+     * not to pages. This game's two segments are page-adjacent at 0x08681000,
+     * so reserving the first claims everything up to 0x08690000 and the second
+     * reserve then fails on address space that is already taken - which is
+     * exactly what it did. */
+    uint32_t lo = 0xFFFFFFFFu, hi = 0;
+    for (unsigned i = 0; i < phnum; i++) {
+        const unsigned char *ph = img + phoff + (size_t)i * phentsize;
+        if (rd32le(ph) != PT_LOAD) continue;
+        uint32_t vaddr = rd32le(ph + 8), memsz = rd32le(ph + 20);
+        if ((vaddr & ~(PAGE - 1)) < lo) lo = vaddr & ~(PAGE - 1);
+        if (vaddr + memsz > hi) hi = vaddr + memsz;
+    }
+    if (lo > hi) {
+        fprintf(stderr, "%s: no PT_LOAD segments\n", elf_path);
+        free(img); return -1;
+    }
+    lo &= ~(GRAN - 1);
+    hi = (hi + GRAN - 1) & ~(GRAN - 1);
+
+    if (!reserve(lo, hi - lo)) {
+        fprintf(stderr, "cannot map the image at %#x..%#x - is this a 32-bit build?\n", lo, hi);
+        free(img); return -1;
+    }
+    memset(G2H(lo), 0, hi - lo);        /* .bss, and the gaps */
+
+    for (unsigned i = 0; i < phnum; i++) {
+        const unsigned char *ph = img + phoff + (size_t)i * phentsize;
+        if (rd32le(ph) != PT_LOAD) continue;
+        memcpy(G2H(rd32le(ph + 8)),     /* p_vaddr  */
+               img + rd32le(ph + 4),                  /* p_offset */
+               rd32le(ph + 16));                      /* p_filesz */
+    }
+    g_brk = hi;                                       /* the heap starts past the image */
+    scan_copy_relocs(img, (size_t)len);
+    free(img);
+
+    if (!reserve((STACK_TOP - STACK_SZ) & ~(GRAN - 1), STACK_SZ)) {
+        fprintf(stderr, "cannot map the guest stack\n"); return -1;
+    }
+    memset(G2H(STACK_TOP - STACK_SZ), 0, STACK_SZ);
+
+    /* The initial stack, exactly as the kernel lays it out for _start:
+     *   esp -> argc, argv[0..argc-1], NULL, envp[0..], NULL, auxv, AT_NULL
+     * The strings go above it. The game's CRT walks this to find its own
+     * argv and to read AT_PAGESZ etc, so a wrong shape crashes before main. */
+    char *strp = (char *)G2H(STACK_TOP - 4096);
+    uint32_t *sp = (uint32_t *)G2H(STACK_TOP - 8192);
+    uint32_t *base = sp;
+    *sp++ = (uint32_t)argc;
+    for (int i = 0; i < argc; i++) {
+        size_t n = strlen(argv[i]) + 1;
+        memcpy(strp, argv[i], n);
+        *sp++ = H2G(strp);
+        strp += n;
+    }
+    *sp++ = 0;            /* argv terminator */
+    *sp++ = 0;            /* empty envp */
+    *sp++ = 6; *sp++ = PAGE;   /* AT_PAGESZ */
+    *sp++ = 0; *sp++ = 0;      /* AT_NULL */
+
+    g_stack_pointer = H2G(base);
+    return 0;
+}
+
+uint32_t guest_entry(void) { return g_entry; }
+
+void guest_init_cpu(CPU *c)
+{
+    memset(c, 0, sizeof *c);
+    guest_set_current_cpu(c);
+    c->esp = g_stack_pointer;
+    c->eip = g_entry;
+}
+
+uint32_t guest_brk(uint32_t newbrk)
+{
+    /* brk(0) queries; a grow commits more pages. The recompiled CRT uses this
+     * before it ever reaches mmap, so it has to work from the first call. */
+    if (newbrk > g_brk) {
+#ifdef RECOMP_GUEST_BASE
+        if (newbrk > 0x20000000u) return g_brk;   /* guest_alloc's heap starts here */
+#endif
+        uint32_t lo = (g_brk + PAGE - 1) & ~(PAGE - 1);
+        uint32_t hi = (newbrk + PAGE - 1) & ~(PAGE - 1);
+        if (hi > lo && !reserve(lo, hi - lo)) return g_brk;
+        g_brk = newbrk;
+    }
+    return g_brk;
+}

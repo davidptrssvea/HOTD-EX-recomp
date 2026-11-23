@@ -1,0 +1,13 @@
+{
+  "title": "The House of the Dead EX",
+  "files": {
+    "elf/hodexRI.elf": "6977e02f75de33c51579aa43ebbda104b05dc993f83cc98cac745b8d023d0d14",
+    "elf/librnalindbergh_jr.so": "1926e21b53a7b154878dd6c7ba2cb2e8bc5dfdad76fa479fe3a8cc56e595c5cd",
+    "elf/libcri_soundoutput_lindbergh_jr.so": "2623c792521abaabfd2f318843649e0a9412750a943d15a7272fcea4f938ce52"
+  },
+  "required": [
+    "fs/sfd/title_bg.sfd",
+    "fs/compiled",
+    "fs/afs"
+  ]
+}

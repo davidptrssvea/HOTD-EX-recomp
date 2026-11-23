@@ -1,0 +1,23 @@
+# User-generated game code and build output must never be published.
+/source/games/*/generated/
+/source/games/*/.generated-*/
+/build*/
+/HOTDEX-PC/
+/.hotdex-setup.lock
+__pycache__/
+*.pyc
+*.partial
+*.log
+*.exe
+*.dll
+*.elf
+*.so
+*.bnk
+*.sfd
+*.afs
+*.bin
+*.ppm
+*.png
+*.jpg
+*.jpeg
+*.zip

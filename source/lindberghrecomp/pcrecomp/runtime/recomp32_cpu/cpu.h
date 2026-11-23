@@ -1,0 +1,771 @@
+/*
+ * cpu.h - runtime for the CPU-struct x86-32 recompilation model
+ *         (paired with tools/lift/lift32_cpu.py).
+ *
+ * Lifted x86 functions operate on an explicit CPU state struct, so several
+ * machine states can be live at once - which is what a hybrid build needs when
+ * real library code calls back into lifted code while an outer lifted call is
+ * still on the stack. See runtime/hybrid/.
+ *
+ * The recomp runs as a 32-bit program so register values are real 32-bit host
+ * pointers: the image's data sections live at their mapped VAs and heap comes
+ * from malloc - both inside the 32-bit address space - so memory operands
+ * dereference directly.
+ *
+ * Flags are computed eagerly by helpers after arithmetic/logic ops; Jcc reads
+ * the stored bits. This is verbose but mechanical and easy to verify against
+ * the hardware. (A lazy-flags optimization can come later.)
+ */
+#ifndef PCRECOMP_CPU_H
+#define PCRECOMP_CPU_H
+
+#include <stdint.h>
+#include <string.h>
+#if defined(_MSC_VER)
+#include <intrin.h>   /* __readfsdword/__writefsdword: TIB-relative (fs:) access for SEH */
+#endif
+
+/* ---- SSE register file ----
+ *
+ * One storage, several views - which is how the silicon works, and why this is
+ * a union rather than eight float[4]. `movaps` moves a bit pattern, `pxor`
+ * works on integers and `addss` works on floats, all through the same 128
+ * bits; a float-only model corrupts the first two the moment a game stores a
+ * mask in an XMM register, which every SSE-era game does.
+ *
+ * Scalar single precision is `float` here and NOT `double` like the x87 stack
+ * below it. That difference is deliberate. An x87 register really is wider
+ * than the values it holds, so widening it costs nothing - but SSE single
+ * genuinely IS 32-bit, and computing `addss` in double rounds once where the
+ * hardware rounds twice. The results differ in the low bits, and in a game
+ * that feeds them to a coordinate transform the difference is visible. */
+/* Whole-register views as the compiler's own vector types (NEON on arm64,
+ * SSE on x86): the lifter writes packed instructions as one vector expression
+ * on these. Lane loops over the arrays were left scalar by the optimiser -
+ * once the union is split into two 64-bit integers, `paddd` became masked
+ * integer adds and `psrldq` a chain of bitfield inserts. */
+typedef float    xv4f  __attribute__((vector_size(16)));
+typedef double   xv2d  __attribute__((vector_size(16)));
+typedef uint32_t xv4u  __attribute__((vector_size(16)));
+typedef int32_t  xv4i  __attribute__((vector_size(16)));
+typedef uint64_t xv2q  __attribute__((vector_size(16)));
+typedef int64_t  xv2qi __attribute__((vector_size(16)));
+typedef uint16_t xv8w  __attribute__((vector_size(16)));
+typedef int16_t  xv8h  __attribute__((vector_size(16)));
+typedef uint8_t  xv16b __attribute__((vector_size(16)));
+typedef union {
+    float    f32[4];
+    double   f64[2];
+    uint32_t u32[4];
+    uint64_t u64[2];
+    int32_t  i32[4];
+    uint16_t u16[8];
+    int16_t  i16[8];
+    uint8_t  u8[16];
+    xv4f vf; xv2d vd; xv4u vu; xv4i vi; xv2q vq; xv8w vw; xv8h vh; xv16b vb;
+} XMM;
+
+typedef struct {
+    uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
+    uint32_t eip;
+    /* flags as discrete bits (0/1) */
+    uint32_t cf, zf, sf, of, pf, af;
+    /* x87: register-stack of doubles. st0 == st[fpu_top]; push pre-decrements. */
+    double   st[8];
+    int      fpu_top;
+    /* SSE: xmm0..xmm7. A 32-bit target has no xmm8-15. */
+    XMM      xmm[8];
+    /* MMX: mm0..mm7. On hardware they alias the x87 registers; nothing lifted
+     * here mixes the two without an emms between, so they are kept apart. */
+    uint64_t mm[8];
+    uint32_t fpu_sw;   /* status word: only C0/C1/C2/C3 condition bits modelled */
+    uint32_t fpu_cw_x; /* control word XOR 0x027F, so a zeroed CPU has the default: only RC is modelled */
+    /* Segment registers: stored, but NOT used in address computation. The
+     * memory model below is flat - a register holds a real 32-bit address - so
+     * `mov ds, ax` records the selector and does nothing else. That is right
+     * for code that only saves and restores them, which is the common case even
+     * in segmented 32-bit code, and wrong for code that switches DS to reach
+     * another segment's data. The latter needs a selector -> base mapping the
+     * runtime does not have; such code should be caught rather than lifted
+     * silently. */
+    uint16_t cs, ds, es, fs, gs, ss;
+    /* AC (bit 18) and ID (bit 21): the two EFLAGS bits user mode can toggle.
+     * Kept so the POPFD/PUSHFD probe for CPUID reads back what it wrote. */
+    uint32_t eflags_user;
+    uint32_t mxcsr;    /* stored for read-back only; the host rounds to nearest */
+} CPU;
+
+/* ---- partial register access (preserve unaffected bits, like x86) ---- */
+#define R8L(r)        ((uint8_t)(r))
+#define R8H(r)        ((uint8_t)((r) >> 8))
+#define R16(r)        ((uint16_t)(r))
+#define SET8L(r, v)   ((r) = ((r) & 0xFFFFFF00u) | (uint8_t)(v))
+#define SET8H(r, v)   ((r) = ((r) & 0xFFFF00FFu) | ((uint32_t)(uint8_t)(v) << 8))
+#define SET16(r, v)   ((r) = ((r) & 0xFFFF0000u) | (uint16_t)(v))
+
+/* ---- memory access ----
+ *
+ * A 32-bit host: a register holds a real address. A 64-bit host (define
+ * RECOMP_GUEST_BASE): a register holds an offset into one reserved 4 GB window
+ * at g_guest_base, so guest address 0x08048000 is g_guest_base + 0x08048000.
+ * Every lifted memory access goes through G2H, so the generated code is the
+ * same either way. */
+#ifdef RECOMP_GUEST_BASE
+#ifdef RECOMP_LIFTED
+/* Lifted code runs only once the window is set, and it never moves: const
+ * lets the compiler load it once per function. Otherwise every guest store
+ * - which might, for all the compiler knows, overwrite the pointer itself -
+ * is followed by a reload, about a tenth of a lifted function's instructions. */
+extern uint8_t *const g_guest_base;
+#else
+extern uint8_t *g_guest_base;
+#endif
+#define G2H(a) ((void *)(g_guest_base + (uint32_t)(a)))
+#else
+#define G2H(a) ((void *)(uintptr_t)(uint32_t)(a))
+#endif
+static inline uint8_t  rd8 (uint32_t a) { return *(uint8_t  *)G2H(a); }
+static inline uint16_t rd16(uint32_t a) { uint16_t v; memcpy(&v, G2H(a), 2); return v; }
+static inline uint32_t rd32(uint32_t a) { uint32_t v; memcpy(&v, G2H(a), 4); return v; }
+/* ---- MMX lanes: what CRI's ISSE IDCT uses, nothing more ---- */
+static inline uint64_t rdmm(uint32_t a) { uint64_t v; memcpy(&v, G2H(a), 8); return v; }
+static inline int16_t mmw(uint64_t v, int i) { return (int16_t)(v >> (16 * i)); }
+static inline int32_t mmd(uint64_t v, int i) { return (int32_t)(v >> (32 * i)); }
+static inline uint64_t mm_w4(int32_t w0, int32_t w1, int32_t w2, int32_t w3)
+{ return (uint64_t)(uint16_t)w0 | (uint64_t)(uint16_t)w1 << 16 | (uint64_t)(uint16_t)w2 << 32 | (uint64_t)(uint16_t)w3 << 48; }
+static inline uint64_t mm_d2(int32_t d0, int32_t d1) { return (uint64_t)(uint32_t)d0 | (uint64_t)(uint32_t)d1 << 32; }
+static inline int32_t mm_sat16(int32_t v) { return v > 32767 ? 32767 : v < -32768 ? -32768 : v; }
+#if defined(__aarch64__) && !defined(RECOMP_MMX_SCALAR)
+/* On an ARM64 host each of these is a NEON instruction or two; the portable
+ * versions below cost a dozen scalar shifts and masks apiece, which made CRI's
+ * MMX IDCT the single largest cost of a movie playing on the Quest. Same
+ * results, lane for lane (RECOMP_MMX_SCALAR selects the portable ones). */
+#include <arm_neon.h>
+#define MM_S16(v) vreinterpret_s16_u64(vcreate_u64(v))
+#define MM_S32(v) vreinterpret_s32_u64(vcreate_u64(v))
+#define MM_U64(x) vget_lane_u64(vreinterpret_u64_##x, 0)
+static inline uint64_t mmx_paddd(uint64_t a, uint64_t b) { int32x2_t r = vadd_s32(MM_S32(a), MM_S32(b)); return MM_U64(s32(r)); }
+static inline uint64_t mmx_psubd(uint64_t a, uint64_t b) { int32x2_t r = vsub_s32(MM_S32(a), MM_S32(b)); return MM_U64(s32(r)); }
+static inline uint64_t mmx_paddsw(uint64_t a, uint64_t b) { int16x4_t r = vqadd_s16(MM_S16(a), MM_S16(b)); return MM_U64(s16(r)); }
+static inline uint64_t mmx_psubsw(uint64_t a, uint64_t b) { int16x4_t r = vqsub_s16(MM_S16(a), MM_S16(b)); return MM_U64(s16(r)); }
+static inline uint64_t mmx_pmulhw(uint64_t a, uint64_t b)
+{   int32x4_t p = vmull_s16(MM_S16(a), MM_S16(b)); int16x4_t r = vshrn_n_s32(p, 16); return MM_U64(s16(r)); }
+static inline uint64_t mmx_pmaddwd(uint64_t a, uint64_t b)
+{   /* pairwise sums of the four products; 0x8000*0x8000*2 wraps, as on hardware */
+    int32x4_t p = vmull_s16(MM_S16(a), MM_S16(b));
+    int32x2_t r = vpadd_s32(vget_low_s32(p), vget_high_s32(p)); return MM_U64(s32(r)); }
+static inline uint64_t mmx_packssdw(uint64_t a, uint64_t b)
+{   int16x4_t r = vqmovn_s32(vcombine_s32(MM_S32(a), MM_S32(b))); return MM_U64(s16(r)); }
+static inline uint64_t mmx_psrad(uint64_t a, uint64_t n)
+{   int k = n > 31 ? 31 : (int)n; int32x2_t r = vshl_s32(MM_S32(a), vdup_n_s32(-k)); return MM_U64(s32(r)); }
+static inline uint64_t mmx_psraw(uint64_t a, uint64_t n)
+{   int k = n > 15 ? 15 : (int)n; int16x4_t r = vshl_s16(MM_S16(a), vdup_n_s16((int16_t)-k)); return MM_U64(s16(r)); }
+#elif defined(RECOMP_MMX_SSE2) && defined(__x86_64__) && !defined(RECOMP_MMX_SCALAR)
+/* The Windows HOTD4 movie decoder can use baseline x64 SSE2. Its four
+ * MMX word lanes or two dword lanes occupy the low half of each XMM value. */
+#include <emmintrin.h>
+
+static inline __m128i mm_sse2_load(uint64_t bits)
+{
+    return _mm_cvtsi64_si128((long long)bits);
+}
+static inline uint64_t mm_sse2_bits(__m128i lanes)
+{
+    return (uint64_t)_mm_cvtsi128_si64(lanes);
+}
+
+static inline uint64_t mmx_paddd(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_add_epi32(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_psubd(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_sub_epi32(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_paddsw(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_adds_epi16(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_psubsw(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_subs_epi16(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_pmulhw(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_mulhi_epi16(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_pmaddwd(uint64_t a, uint64_t b)
+{ return mm_sse2_bits(_mm_madd_epi16(mm_sse2_load(a), mm_sse2_load(b))); }
+static inline uint64_t mmx_packssdw(uint64_t a, uint64_t b)
+{
+    __m128i packed = _mm_unpacklo_epi64(mm_sse2_load(a), mm_sse2_load(b));
+    return mm_sse2_bits(_mm_packs_epi32(packed, _mm_setzero_si128()));
+}
+static inline uint64_t mmx_psrad(uint64_t a, uint64_t n)
+{ return mm_sse2_bits(_mm_sra_epi32(mm_sse2_load(a), mm_sse2_load(n))); }
+static inline uint64_t mmx_psraw(uint64_t a, uint64_t n)
+{ return mm_sse2_bits(_mm_sra_epi16(mm_sse2_load(a), mm_sse2_load(n))); }
+#else
+static inline uint64_t mmx_paddd(uint64_t a, uint64_t b) { return mm_d2((int32_t)((uint32_t)mmd(a,0) + (uint32_t)mmd(b,0)), (int32_t)((uint32_t)mmd(a,1) + (uint32_t)mmd(b,1))); }
+static inline uint64_t mmx_psubd(uint64_t a, uint64_t b) { return mm_d2((int32_t)((uint32_t)mmd(a,0) - (uint32_t)mmd(b,0)), (int32_t)((uint32_t)mmd(a,1) - (uint32_t)mmd(b,1))); }
+static inline uint64_t mmx_paddsw(uint64_t a, uint64_t b) { return mm_w4(mm_sat16(mmw(a,0)+mmw(b,0)), mm_sat16(mmw(a,1)+mmw(b,1)), mm_sat16(mmw(a,2)+mmw(b,2)), mm_sat16(mmw(a,3)+mmw(b,3))); }
+static inline uint64_t mmx_psubsw(uint64_t a, uint64_t b) { return mm_w4(mm_sat16(mmw(a,0)-mmw(b,0)), mm_sat16(mmw(a,1)-mmw(b,1)), mm_sat16(mmw(a,2)-mmw(b,2)), mm_sat16(mmw(a,3)-mmw(b,3))); }
+static inline uint64_t mmx_pmulhw(uint64_t a, uint64_t b) { return mm_w4((mmw(a,0)*mmw(b,0)) >> 16, (mmw(a,1)*mmw(b,1)) >> 16, (mmw(a,2)*mmw(b,2)) >> 16, (mmw(a,3)*mmw(b,3)) >> 16); }
+static inline uint64_t mmx_pmaddwd(uint64_t a, uint64_t b)
+{   /* the one overflow case, 0x8000*0x8000*2, wraps on hardware too */
+    return mm_d2((int32_t)((uint32_t)(mmw(a,0)*mmw(b,0)) + (uint32_t)(mmw(a,1)*mmw(b,1))),
+                 (int32_t)((uint32_t)(mmw(a,2)*mmw(b,2)) + (uint32_t)(mmw(a,3)*mmw(b,3)))); }
+static inline uint64_t mmx_packssdw(uint64_t a, uint64_t b) { return mm_w4(mm_sat16(mmd(a,0)), mm_sat16(mmd(a,1)), mm_sat16(mmd(b,0)), mm_sat16(mmd(b,1))); }
+static inline uint64_t mmx_psrad(uint64_t a, uint64_t n) { int k = n > 31 ? 31 : (int)n; return mm_d2(mmd(a,0) >> k, mmd(a,1) >> k); }
+static inline uint64_t mmx_psraw(uint64_t a, uint64_t n) { int k = n > 15 ? 15 : (int)n; return mm_w4(mmw(a,0) >> k, mmw(a,1) >> k, mmw(a,2) >> k, mmw(a,3) >> k); }
+#endif
+static inline uint64_t mmx_por(uint64_t a, uint64_t b) { return a | b; }
+static inline uint64_t mmx_pshufw(uint64_t b, unsigned imm) { return mm_w4(mmw(b, imm & 3), mmw(b, (imm >> 2) & 3), mmw(b, (imm >> 4) & 3), mmw(b, (imm >> 6) & 3)); }
+static inline uint64_t mmx_pinsrw(uint64_t a, uint32_t v, unsigned imm) { int i = imm & 3; return (a & ~(0xFFFFull << (16 * i))) | (uint64_t)(uint16_t)v << (16 * i); }
+
+static inline void wr8 (uint32_t a, uint8_t  v) { *(uint8_t  *)G2H(a) = v; }
+static inline void wr16(uint32_t a, uint16_t v) { memcpy(G2H(a), &v, 2); }
+static inline void wr32(uint32_t a, uint32_t v) { memcpy(G2H(a), &v, 4); }
+
+/* ---- EFLAGS pack/unpack (modelled bits only) ---- */
+/* `lock`-prefixed read-modify-write.
+ *
+ * A recompiled game with a worker pool needs these to be real: the guest uses
+ * `lock xadd` for every reference count and every queue index, and a
+ * non-atomic one is a use-after-free an hour into a session rather than a
+ * crash you can find. Nothing else in this header cares about other threads;
+ * these do.
+ *
+ * The x86 semantics are "return the old value" for xadd, and for cmpxchg
+ * "return what was there, and the caller compares" - the ZF the instruction
+ * sets follows from that. */
+#if defined(_MSC_VER)
+static inline uint32_t atomic_xadd32(uint32_t a, uint32_t v) {
+    return (uint32_t)_InterlockedExchangeAdd((volatile long *)G2H(a), (long)v);
+}
+static inline uint32_t atomic_cmpxchg32(uint32_t a, uint32_t cmp, uint32_t nv) {
+    return (uint32_t)_InterlockedCompareExchange((volatile long *)G2H(a),
+                                                 (long)nv, (long)cmp);
+}
+static inline uint32_t atomic_xchg32(uint32_t a, uint32_t v) {
+    return (uint32_t)_InterlockedExchange((volatile long *)G2H(a), (long)v);
+}
+#else
+static inline uint32_t atomic_xadd32(uint32_t a, uint32_t v) {
+    return __sync_fetch_and_add((volatile uint32_t *)G2H(a), v);
+}
+static inline uint32_t atomic_cmpxchg32(uint32_t a, uint32_t cmp, uint32_t nv) {
+    return __sync_val_compare_and_swap((volatile uint32_t *)G2H(a), cmp, nv);
+}
+static inline uint32_t atomic_xchg32(uint32_t a, uint32_t v) {
+    return __sync_lock_test_and_set((volatile uint32_t *)G2H(a), v);
+}
+#endif
+
+static inline uint32_t eflags_pack(CPU *c) {
+    return 0x202u | c->eflags_user | (c->cf) | (c->pf << 2) | (c->af << 4) |
+           (c->zf << 6) | (c->sf << 7) | (c->of << 11);
+}
+static inline void eflags_unpack(CPU *c, uint32_t v) {
+    c->eflags_user = v & 0x240000u;
+    c->cf = v & 1; c->pf = (v >> 2) & 1; c->af = (v >> 4) & 1;
+    c->zf = (v >> 6) & 1; c->sf = (v >> 7) & 1; c->of = (v >> 11) & 1;
+}
+
+/* ---- stack ----
+ *
+ * ESP is an address in a flat build, so the base is zero and these compile to
+ * exactly what they did before. A segmented build defines STACK_BASE to its
+ * SS base instead, because there ESP is an OFFSET: 16-bit code reaching its
+ * arguments does `mov bp, sp` and then `[bp+6]`, and truncating a host address
+ * to 16 bits produces a pointer to nothing. */
+#ifndef STACK_BASE
+#define STACK_BASE(c) 0u
+#endif
+static inline void push32(CPU *c, uint32_t v) { c->esp -= 4; wr32(STACK_BASE(c) + c->esp, v); }
+static inline uint32_t pop32(CPU *c) { uint32_t v = rd32(STACK_BASE(c) + c->esp); c->esp += 4; return v; }
+
+/* CPUID, answered as the Pentium 4 a Lindbergh board carries: GenuineIntel,
+ * family 15, with SSE3 (Prescott). A game built with the Intel compiler checks the vendor
+ * and the features before main and refuses to run on anything else; the host's
+ * real answer (an ARM Mac has none) is not the machine the game was built for. */
+static inline void cpuid(CPU *c) {
+    static const char brand[48] = "Intel(R) Pentium(R) 4 CPU 3.00GHz";
+    uint32_t leaf = c->eax;
+    c->eax = c->ebx = c->ecx = c->edx = 0;
+    switch (leaf) {
+    case 0: c->eax = 2; c->ebx = 0x756E6547u; c->edx = 0x49656E69u; c->ecx = 0x6C65746Eu; break;
+    case 1: c->eax = 0x00000F41u; c->ebx = 0x00010800u; c->ecx = 0x0000441Du; c->edx = 0xBFEBFBFFu; break;
+    case 2: c->eax = 0x665B5001u; c->edx = 0x007A7040u; break;
+    case 0x80000000u: c->eax = 0x80000004u; break;
+    case 0x80000002u: case 0x80000003u: case 0x80000004u: {
+        const uint32_t *w = (const uint32_t *)(const void *)(brand + 16 * (leaf - 0x80000002u));
+        c->eax = w[0]; c->ebx = w[1]; c->ecx = w[2]; c->edx = w[3];
+        break; }
+    default: break;
+    }
+}
+
+/* RDTSC: a monotonic count standing in for the cycle counter, at a nominal
+ * 3 GHz so code that divides by a calibrated frequency sees sane numbers. */
+#include <time.h>
+static inline void rdtsc(CPU *c) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    /* A thread polling the counter back to back is waiting for a deadline -
+     * a game's frame limiter spinning after its swap, say. Sleep a little
+     * between polls instead: the wait ends at most a few tens of
+     * microseconds late, and the core it burnt (a full one, on a headset
+     * that throttles when hot) is free. */
+    static __thread uint64_t last_ns;
+    static __thread unsigned streak;
+    uint64_t ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+    if (ns - last_ns < 20000u) {
+        if (++streak >= 32) {
+            struct timespec nap = { 0, 50000 };
+            nanosleep(&nap, NULL);
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+            ns = (uint64_t)ts.tv_sec * 1000000000ull + (uint64_t)ts.tv_nsec;
+        }
+    } else streak = 0;
+    last_ns = ns;
+    uint64_t t = (uint64_t)ts.tv_sec * 3000000000ull + (uint64_t)ts.tv_nsec * 3ull;
+    c->eax = (uint32_t)t; c->edx = (uint32_t)(t >> 32);
+}
+
+/* SSE2 integer helpers: lane-wise shifts with the hardware's rule that a
+ * count past the lane width clears it. */
+static inline uint64_t sse_sll64(uint64_t v, uint64_t n) { return n > 63 ? 0 : v << n; }
+static inline uint64_t sse_srl64(uint64_t v, uint64_t n) { return n > 63 ? 0 : v >> n; }
+static inline uint32_t sse_srl32(uint32_t v, uint64_t n) { return n > 31 ? 0 : v >> n; }
+
+/* FXSAVE/FXRSTOR. Control word and MXCSR are the defaults this model runs
+ * with (round to nearest, all exceptions masked); MXCSR_MASK is the full mask
+ * a Pentium 4 reports, DAZ included. The XMM registers round-trip. */
+static inline void fxsave(CPU *c, uint32_t a) {
+    for (uint32_t i = 0; i < 512; i += 4) wr32(a + i, 0);
+    wr32(a + 0, ((c->fpu_cw_x ^ 0x027Fu) & 0xFFFFu) | ((c->fpu_sw & 0xFFFFu) << 16));
+    wr32(a + 24, c->mxcsr ? c->mxcsr : 0x1F80u);
+    wr32(a + 28, 0xFFFFu);
+    for (int r = 0; r < 8; r++)
+        for (int k = 0; k < 4; k++) wr32(a + 160 + 16 * r + 4 * k, c->xmm[r].u32[k]);
+}
+static inline void fxrstor(CPU *c, uint32_t a) {
+    for (int r = 0; r < 8; r++)
+        for (int k = 0; k < 4; k++) c->xmm[r].u32[k] = rd32(a + 160 + 16 * r + 4 * k);
+}
+
+/* An instruction the lifter could not express. Plain abort() by default, so a
+ * project that includes only cpu.h is unchanged; a runtime that can say
+ * something useful - which guest address, which mnemonic, how it got there -
+ * defines RECOMP_TODO before including this. A bare abort() in two million
+ * lines becomes __fastfail in a release build, which no handler sees. */
+#ifndef RECOMP_TODO
+#define RECOMP_TODO(va, text) abort()
+#endif
+
+/* fs:/gs: segment-relative reads. MSVC has intrinsics for the Win32 TIB; a
+ * Linux/i386 guest only reaches these from data the disassembler took for
+ * code, so elsewhere they report through RECOMP_TODO instead of guessing. */
+#if !defined(_MSC_VER)
+static inline uint8_t  __readfsbyte (uint32_t a) { RECOMP_TODO(a, "fs: read"); return 0; }
+static inline uint16_t __readfsword (uint32_t a) { RECOMP_TODO(a, "fs: read"); return 0; }
+static inline uint32_t __readfsdword(uint32_t a) { RECOMP_TODO(a, "fs: read"); return 0; }
+static inline void __writefsbyte (uint32_t a, uint8_t  v) { (void)v; RECOMP_TODO(a, "fs: write"); }
+static inline void __writefsword (uint32_t a, uint16_t v) { (void)v; RECOMP_TODO(a, "fs: write"); }
+static inline void __writefsdword(uint32_t a, uint32_t v) { (void)v; RECOMP_TODO(a, "fs: write"); }
+#endif
+
+/* ---- absolute image references: abs VA at preferred base -> live address ---- */
+extern uint32_t g_image_delta;   /* live_base - PE ImageBase (0 if loaded where it wanted) */
+#define GVA(abs) ((uint32_t)((abs) + g_image_delta))
+
+/* ---- flag helpers ---- */
+static inline uint32_t parity8(uint8_t v) {
+    v ^= v >> 4; v ^= v >> 2; v ^= v >> 1; return (~v) & 1;
+}
+
+/* logical ops (AND/OR/XOR/TEST): CF=OF=0 */
+static inline void flags_logic32(CPU *c, uint32_t r) {
+    c->cf = 0; c->of = 0; c->sf = r >> 31; c->zf = (r == 0); c->pf = parity8((uint8_t)r);
+}
+static inline void flags_logic8(CPU *c, uint8_t r) {
+    c->cf = 0; c->of = 0; c->sf = (r >> 7) & 1; c->zf = (r == 0); c->pf = parity8(r);
+}
+/* cmp/sub (a - b) */
+static inline uint32_t flags_sub32(CPU *c, uint32_t a, uint32_t b) {
+    uint32_t r = a - b;
+    c->cf = (a < b);
+    c->zf = (r == 0);
+    c->sf = r >> 31;
+    c->of = (((a ^ b) & (a ^ r)) >> 31) & 1;
+    c->af = ((a ^ b ^ r) >> 4) & 1;
+    c->pf = parity8((uint8_t)r);
+    return r;
+}
+/* add (a + b) */
+static inline uint32_t flags_add32(CPU *c, uint32_t a, uint32_t b) {
+    uint32_t r = a + b;
+    c->cf = (r < a);
+    c->zf = (r == 0);
+    c->sf = r >> 31;
+    c->of = ((~(a ^ b) & (a ^ r)) >> 31) & 1;
+    c->af = ((a ^ b ^ r) >> 4) & 1;
+    c->pf = parity8((uint8_t)r);
+    return r;
+}
+/* inc/dec: like add/sub by 1 but CF preserved */
+static inline uint32_t flags_inc32(CPU *c, uint32_t a) {
+    uint32_t keepcf = c->cf, r = flags_add32(c, a, 1); c->cf = keepcf; return r;
+}
+static inline uint32_t flags_dec32(CPU *c, uint32_t a) {
+    uint32_t keepcf = c->cf, r = flags_sub32(c, a, 1); c->cf = keepcf; return r;
+}
+
+/* ---- width-generic flag helpers (sz in {1,2,4}); used by generated code ---- */
+static inline uint32_t mask_sz(int sz) { return sz == 1 ? 0xFFu : sz == 2 ? 0xFFFFu : 0xFFFFFFFFu; }
+static inline uint32_t sign_sz(int sz) { return sz == 1 ? 0x80u : sz == 2 ? 0x8000u : 0x80000000u; }
+
+static inline uint32_t flags_sub(CPU *c, uint32_t a, uint32_t b, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz);
+    a &= m; b &= m; uint32_t r = (a - b) & m;
+    c->cf = (a < b); c->zf = (r == 0); c->sf = (r & s) != 0;
+    c->of = (((a ^ b) & (a ^ r)) & s) != 0; c->af = ((a ^ b ^ r) & 0x10) != 0;
+    c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t flags_add(CPU *c, uint32_t a, uint32_t b, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz);
+    a &= m; b &= m; uint32_t r = (a + b) & m;
+    c->cf = (r < a); c->zf = (r == 0); c->sf = (r & s) != 0;
+    c->of = ((~(a ^ b) & (a ^ r)) & s) != 0; c->af = ((a ^ b ^ r) & 0x10) != 0;
+    c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t flags_logicz(CPU *c, uint32_t r, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz); r &= m;
+    c->cf = 0; c->of = 0; c->sf = (r & s) != 0; c->zf = (r == 0);
+    c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t flags_incs(CPU *c, uint32_t a, int sz) {
+    uint32_t keep = c->cf, r = flags_add(c, a, 1, sz); c->cf = keep; return r;
+}
+static inline uint32_t flags_decs(CPU *c, uint32_t a, int sz) {
+    uint32_t keep = c->cf, r = flags_sub(c, a, 1, sz); c->cf = keep; return r;
+}
+static inline uint32_t flags_adc(CPU *c, uint32_t a, uint32_t b, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz), cin = c->cf & 1;
+    a &= m; b &= m; uint64_t full = (uint64_t)a + b + cin; uint32_t r = (uint32_t)full & m;
+    c->cf = (full >> (sz * 8)) & 1; c->zf = (r == 0); c->sf = (r & s) != 0;
+    c->of = ((~(a ^ b) & (a ^ r)) & s) != 0; c->af = ((a ^ b ^ r) & 0x10) != 0;
+    c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t flags_sbb(CPU *c, uint32_t a, uint32_t b, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz), bin = c->cf & 1;
+    a &= m; b &= m; uint64_t full = (uint64_t)a - b - bin; uint32_t r = (uint32_t)full & m;
+    c->cf = (full >> (sz * 8)) & 1; c->zf = (r == 0); c->sf = (r & s) != 0;
+    c->of = (((a ^ b) & (a ^ r)) & s) != 0; c->af = ((a ^ b ^ r) & 0x10) != 0;
+    c->pf = parity8((uint8_t)r); return r;
+}
+
+static inline uint32_t op_shl(CPU *c, uint32_t v, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); cnt &= 31; if (!cnt) return v & m;
+    c->cf = (v >> (sz * 8 - cnt)) & 1; uint32_t r = (v << cnt) & m;
+    c->zf = (r == 0); c->sf = (r & sign_sz(sz)) != 0; c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t op_shr(CPU *c, uint32_t v, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); v &= m; cnt &= 31; if (!cnt) return v;
+    c->cf = (v >> (cnt - 1)) & 1; uint32_t r = v >> cnt;
+    c->zf = (r == 0); c->sf = (r & sign_sz(sz)) != 0; c->pf = parity8((uint8_t)r); return r;
+}
+static inline uint32_t op_sar(CPU *c, uint32_t v, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz), s = sign_sz(sz); v &= m; cnt &= 31; if (!cnt) return v;
+    uint32_t ext = (v & s) ? (m << (sz * 8 - cnt)) & m : 0;
+    c->cf = (v >> (cnt - 1)) & 1; uint32_t r = ((v >> cnt) | ext) & m;
+    c->zf = (r == 0); c->sf = (r & s) != 0; c->pf = parity8((uint8_t)r); return r;
+}
+
+/* ---- rotates. Unlike the shifts these leave ZF/SF/PF alone, which is not an
+   omission: x86 does not touch them here, and code that rotates then branches
+   on the zero flag is reading the flag the PREVIOUS instruction set. ---- */
+static inline uint32_t op_rol(CPU *c, uint32_t v, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); int w = sz * 8; v &= m;
+    cnt &= 31; cnt %= (uint32_t)w; if (!cnt) return v;
+    uint32_t r = ((v << cnt) | (v >> (w - cnt))) & m;
+    c->cf = r & 1;
+    c->of = (((r >> (w - 1)) & 1) ^ (c->cf & 1));
+    return r;
+}
+static inline uint32_t op_ror(CPU *c, uint32_t v, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); int w = sz * 8; v &= m;
+    cnt &= 31; cnt %= (uint32_t)w; if (!cnt) return v;
+    uint32_t r = ((v >> cnt) | (v << (w - cnt))) & m;
+    c->cf = (r >> (w - 1)) & 1;
+    c->of = (((r >> (w - 1)) & 1) ^ ((r >> (w - 2)) & 1));
+    return r;
+}
+
+/* ---- byte order ----
+ *
+ * bswap reverses the four bytes of a 32-bit register and touches no flags.
+ * It is how a compiler writes htonl/ntohl inline, so it turns up in any code
+ * that opens a socket, next to a `ror bx, 8` doing the 16-bit half.
+ *
+ * The 16-bit form is architecturally undefined - Intel documents it as such
+ * and real parts leave the register zeroed - so a compiler never emits it and
+ * this deliberately does not pretend to implement it. */
+static inline uint32_t op_bswap32(uint32_t v) {
+    return (v >> 24) | ((v >> 8) & 0x0000FF00u)
+         | ((v << 8) & 0x00FF0000u) | (v << 24);
+}
+
+/* ---- double-precision shifts: shift `d`, feeding in bits from `s` ---- */
+static inline uint32_t op_shld(CPU *c, uint32_t d, uint32_t s, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); int w = sz * 8;
+    d &= m; s &= m; cnt &= 31;
+    if (!cnt || cnt > (uint32_t)w) return d;      /* count > width is undefined */
+    uint32_t r = ((d << cnt) | (s >> (w - cnt))) & m;
+    c->cf = (d >> (w - cnt)) & 1;
+    c->zf = (r == 0); c->sf = (r & sign_sz(sz)) != 0; c->pf = parity8((uint8_t)r);
+    return r;
+}
+static inline uint32_t op_shrd(CPU *c, uint32_t d, uint32_t s, uint32_t cnt, int sz) {
+    uint32_t m = mask_sz(sz); int w = sz * 8;
+    d &= m; s &= m; cnt &= 31;
+    if (!cnt || cnt > (uint32_t)w) return d;
+    uint32_t r = ((d >> cnt) | (s << (w - cnt))) & m;
+    c->cf = (d >> (cnt - 1)) & 1;
+    c->zf = (r == 0); c->sf = (r & sign_sz(sz)) != 0; c->pf = parity8((uint8_t)r);
+    return r;
+}
+
+/* ---- shifts (set flags like x86; count masked to 5 bits) ---- */
+static inline uint32_t shr32(CPU *c, uint32_t v, uint32_t cnt) {
+    cnt &= 31; if (!cnt) return v;
+    c->cf = (v >> (cnt - 1)) & 1;
+    uint32_t r = v >> cnt;
+    c->zf = (r == 0); c->sf = r >> 31; c->pf = parity8((uint8_t)r);
+    return r;
+}
+static inline uint32_t shl32(CPU *c, uint32_t v, uint32_t cnt) {
+    cnt &= 31; if (!cnt) return v;
+    c->cf = (v >> (32 - cnt)) & 1;
+    uint32_t r = v << cnt;
+    c->zf = (r == 0); c->sf = r >> 31; c->pf = parity8((uint8_t)r);
+    return r;
+}
+static inline uint8_t shr8(CPU *c, uint8_t v, uint32_t cnt) {
+    cnt &= 31; if (!cnt) return v;
+    if (cnt <= 8) c->cf = (v >> (cnt - 1)) & 1;
+    uint8_t r = (cnt < 8) ? (uint8_t)(v >> cnt) : 0;
+    c->zf = (r == 0); c->sf = (r >> 7) & 1; c->pf = parity8(r);
+    return r;
+}
+
+/* ---- x87 FPU ---- */
+#include <math.h>
+static inline void   fpush(CPU *c, double v) { c->fpu_top = (c->fpu_top - 1) & 7; c->st[c->fpu_top] = v; }
+static inline double fpop(CPU *c) { double v = c->st[c->fpu_top]; c->fpu_top = (c->fpu_top + 1) & 7; return v; }
+static inline double *fst(CPU *c, int i) { return &c->st[(c->fpu_top + i) & 7]; }
+
+/* float/double/int memory operands (memcpy avoids alignment/aliasing issues) */
+static inline double rdf32(uint32_t a) { float  f; memcpy(&f, G2H(a), 4); return (double)f; }
+static inline double rdf64(uint32_t a) { double d; memcpy(&d, G2H(a), 8); return d; }
+static inline double rdi16(uint32_t a) { int16_t i; memcpy(&i, G2H(a), 2); return (double)i; }
+static inline double rdi32(uint32_t a) { int32_t i; memcpy(&i, G2H(a), 4); return (double)i; }
+static inline double rdi64(uint32_t a) { int64_t i; memcpy(&i, G2H(a), 8); return (double)i; }
+static inline void   wrf32(uint32_t a, double v) { float  f = (float)v; memcpy(G2H(a), &f, 4); }
+static inline void   wrf64(uint32_t a, double v) { memcpy(G2H(a), &v, 8); }
+static inline void   wri32(uint32_t a, double v) { int32_t i = (int32_t)nearbyint(v); memcpy(G2H(a), &i, 4); }
+static inline void   wri16(uint32_t a, double v) { int16_t i = (int16_t)nearbyint(v); memcpy(G2H(a), &i, 2); }
+static inline void   wri64(uint32_t a, double v) { int64_t i = (int64_t)nearbyint(v); memcpy(G2H(a), &i, 8); }
+
+/* The x87 rounding control (control word bits 10-11), which frndint and the
+ * integer stores obey. GCC brackets every (int) cast with fldcw to truncate,
+ * and libCg rounds log2 up to size its arrays: rounding to nearest whatever
+ * the mode made those too small, and the copy into one wrecked the heap. */
+static inline uint32_t fpu_cw(const CPU *c) { return (c->fpu_cw_x ^ 0x027Fu) & 0xFFFFu; }
+static inline void fpu_set_cw(CPU *c, uint32_t cw) { c->fpu_cw_x = (cw & 0xFFFFu) ^ 0x027Fu; }
+static inline double fpu_round(const CPU *c, double v) {
+    switch ((fpu_cw(c) >> 10) & 3u) {
+    case 1:  return floor(v);
+    case 2:  return ceil(v);
+    case 3:  return trunc(v);
+    default: return nearbyint(v);
+    }
+}
+
+/* fcom/fcomp: set C3/C2/C0 (st0 vs v). Cleared C1. */
+static inline void fcompare(CPU *c, double a, double b) {
+    uint32_t sw = c->fpu_sw & ~0x4700u;
+    if      (a > b)  { /* 000 */ }
+    else if (a < b)  sw |= 0x0100u;          /* C0 */
+    else if (a == b) sw |= 0x4000u;          /* C3 */
+    else             sw |= 0x4700u;          /* unordered: C3|C2|C0 */
+    c->fpu_sw = sw;
+}
+/* fcomi/fucomi: the same comparison, into EFLAGS instead of the status word.
+ * The P6 forms exist so a compiler can branch on a float compare without
+ * going through `fnstsw ax; test ah`. Note the mapping is not the integer
+ * one: "unordered" is ZF=PF=CF=1, which is why `jp` after an fcomi is the
+ * NaN test, and OF/SF/AF are cleared. */
+static inline void fcompare_eflags(CPU *c, double a, double b) {
+    c->of = c->sf = c->af = 0;
+    if      (a > b)  { c->zf = 0; c->pf = 0; c->cf = 0; }
+    else if (a < b)  { c->zf = 0; c->pf = 0; c->cf = 1; }
+    else if (a == b) { c->zf = 1; c->pf = 0; c->cf = 0; }
+    else             { c->zf = 1; c->pf = 1; c->cf = 1; }
+}
+/* sahf: load AH into CF,PF,AF,ZF,SF */
+static inline void do_sahf(CPU *c, uint8_t ah) {
+    c->cf = ah & 1; c->pf = (ah >> 2) & 1; c->af = (ah >> 4) & 1;
+    c->zf = (ah >> 6) & 1; c->sf = (ah >> 7) & 1;
+}
+
+/* ---- SSE ----
+ *
+ * Enough of SSE/SSE2 for a Pentium 4-era game: scalar float and double, the
+ * packed moves and bitwise ops, and the compares. Packed arithmetic beyond
+ * that is not here yet - it lifts to a TODO rather than silently wrong code.
+ */
+
+/* Memory operands. Separate from the x87 rdf32/rdf64 above because those
+ * widen to double for the 80-bit stack, and these must not. memcpy because an
+ * SSE memory operand is frequently unaligned (movups exists for a reason). */
+static inline float  rdss(uint32_t a) { float  f; memcpy(&f, G2H(a), 4); return f; }
+static inline double rdsd(uint32_t a) { double d; memcpy(&d, G2H(a), 8); return d; }
+static inline XMM    rdxm(uint32_t a) { XMM x;    memcpy(&x, G2H(a), 16); return x; }
+static inline void   wrmm(uint32_t a, uint64_t v) { memcpy(G2H(a), &v, 8); }
+static inline void   wrss(uint32_t a, float  v) { memcpy(G2H(a), &v, 4); }
+static inline void   wrsd(uint32_t a, double v) { memcpy(G2H(a), &v, 8); }
+static inline void   wrxm(uint32_t a, XMM    v) { memcpy(G2H(a), &v, 16); }
+
+/* MOVSS/MOVSD loading from memory zero the rest of the register; the
+ * register-to-register forms leave the high lanes alone. Getting that
+ * backwards is invisible until something reads the high lanes, which is why
+ * it is a named helper and not an open-coded assignment. */
+static inline void sse_load_ss(XMM *d, float  v) { d->u64[0] = 0; d->u64[1] = 0; d->f32[0] = v; }
+static inline void sse_load_sd(XMM *d, double v) { d->u64[0] = 0; d->u64[1] = 0; d->f64[0] = v; }
+
+/* UCOMISS/COMISS/UCOMISD/COMISD: the comparison lands in ZF/PF/CF, and clears
+ * OF/SF/AF. An unordered compare - either operand NaN - sets all three, which
+ * is exactly what makes `ucomiss; jp` a NaN test and `ucomiss; jbe` mean
+ * "below or equal, or unordered". Note the flags are the UNSIGNED set: the
+ * compiler emits `ja`/`jbe` after a float compare, never `jg`/`jle`. */
+static inline void sse_compare(CPU *c, double a, double b) {
+    c->of = 0; c->sf = 0; c->af = 0;
+    if (a != a || b != b) { c->zf = 1; c->pf = 1; c->cf = 1; }   /* unordered */
+    else                  { c->zf = (a == b); c->pf = 0; c->cf = (a < b); }
+}
+
+/* MINSS/MAXSS are not fmin/fmax. The manual defines them as
+ *     if (dst OP src) then dst else src
+ * and that "else src" is load-bearing in two cases fmin gets the other way
+ * round: when the operands are equal - which includes +0.0 against -0.0, so
+ * min(+0,-0) is -0 but min(-0,+0) is +0 - and when either is NaN, where the
+ * comparison is false and the SECOND operand wins. Written in that exact
+ * shape, C's own "any compare with NaN is false" rule delivers both for free.
+ * Writing it the other way round, `(src < dst) ? src : dst`, looks identical
+ * and is wrong on both. */
+static inline float  sse_minf(float  d, float  s) { return (d < s) ? d : s; }
+static inline float  sse_maxf(float  d, float  s) { return (d > s) ? d : s; }
+static inline double sse_mind(double d, double s) { return (d < s) ? d : s; }
+static inline double sse_maxd(double d, double s) { return (d > s) ? d : s; }
+
+/* CVTTSS2SI and friends yield the "integer indefinite" value when the source
+ * does not fit in 32 bits, where the equivalent C cast is undefined behaviour
+ * and may trap. One comparison buys a defined answer that matches hardware. */
+static inline int32_t sse_cvtt_i32(double v) {
+    return (v >= -2147483648.0 && v < 2147483648.0) ? (int32_t)v : (int32_t)0x80000000;
+}
+
+/* ---- BT / BTS / BTR / BTC ----
+ *
+ * With a memory destination and a register bit index, the index is NOT masked
+ * to the operand size: it selects a dword away from the base address, which is
+ * how a bitmap of arbitrary size gets addressed. Masking it the way the
+ * register form does would quietly read and write the wrong word - the kind of
+ * wrong that shows up as unrelated corruption much later.
+ *
+ * op: 0 test, 1 set, 2 reset, 3 complement. CF receives the bit as it was. */
+static inline uint32_t bit_string_op(CPU *c, uint32_t addr, int32_t idx, int op)
+{
+    uint32_t a = addr + 4u * (uint32_t)(idx >> 5);
+    unsigned b = (unsigned)(idx & 31);
+    uint32_t w = rd32(a);
+    c->cf = (w >> b) & 1u;
+    if      (op == 1) w |=  (1u << b);
+    else if (op == 2) w &= ~(1u << b);
+    else if (op == 3) w ^=  (1u << b);
+    if (op) wr32(a, w);
+    return c->cf;
+}
+
+/* The register form, where the index really is taken modulo the width. */
+static inline uint32_t bit_reg_op(CPU *c, uint32_t *r, uint32_t idx, int op)
+{
+    unsigned b = idx & 31u;
+    c->cf = (*r >> b) & 1u;
+    if      (op == 1) *r |=  (1u << b);
+    else if (op == 2) *r &= ~(1u << b);
+    else if (op == 3) *r ^=  (1u << b);
+    return c->cf;
+}
+
+/* ---- 80-bit extended precision ----
+ *
+ * The x87 stack here is modelled as doubles, which is right for almost
+ * everything - but `fld tbyte` and `fstp tbyte` name the hardware's own
+ * 80-bit format directly, and a compiler emits them to spill a register
+ * without losing precision. Reading one as anything else returns nonsense.
+ *
+ * The format is a sign bit, a 15-bit exponent biased by 16383, and a 64-bit
+ * mantissa whose integer bit is EXPLICIT - unlike float and double, where it
+ * is implied. Converting to double loses the extra bits, which is the same
+ * loss the rest of this model already accepts.
+ */
+static inline double rdf80(uint32_t a)
+{
+    unsigned char b[10];
+    memcpy(b, G2H(a), 10);
+
+    uint64_t mant;
+    uint16_t se;
+    memcpy(&mant, b, 8);
+    memcpy(&se, b + 8, 2);
+
+    int sign = (se >> 15) & 1;
+    int exp  = se & 0x7FFF;
+
+    if (exp == 0 && mant == 0) return sign ? -0.0 : 0.0;
+    if (exp == 0x7FFF) {
+        if (mant << 1) return (double)NAN;
+        return sign ? -(double)INFINITY : (double)INFINITY;
+    }
+    double m = (double)mant * 5.4210108624275222e-20;   /* 2^-64 */
+    return ldexp(sign ? -m : m, exp - 16383 + 1);
+}
+
+static inline void wrf80(uint32_t a, double v)
+{
+    unsigned char b[10];
+    uint64_t mant = 0;
+    uint16_t se = 0;
+
+    memset(b, 0, sizeof b);
+    if (v != v) {                                   /* NaN */
+        se = 0x7FFF; mant = 0xC000000000000000ull;
+    } else if (v == (double)INFINITY || v == -(double)INFINITY) {
+        se = 0x7FFF; mant = 0x8000000000000000ull;
+        if (v < 0) se |= 0x8000;
+    } else if (v != 0.0) {
+        int e;
+        double m = frexp(v < 0 ? -v : v, &e);        /* m in [0.5, 1) */
+        mant = (uint64_t)ldexp(m, 64);
+        se = (uint16_t)((e - 1 + 16383) & 0x7FFF);
+        if (v < 0) se |= 0x8000;
+    }
+    memcpy(b, &mant, 8);
+    memcpy(b + 8, &se, 2);
+    memcpy(G2H(a), b, 10);
+}
+
+/* FPREM: the remainder of st0/st1 with the quotient truncated toward zero,
+ * which is what fmod computes. The hardware may reduce only partially and set
+ * C2 to say "call me again"; computing the whole thing at once means C2 is
+ * always clear, and the loop the compiler wrote around it runs once. */
+static inline double fprem_op(CPU *c, double a, double b)
+{
+    c->fpu_sw &= ~0x0400u;              /* C2 = 0: reduction complete */
+    return fmod(a, b);
+}
+
+#endif /* PCRECOMP_CPU_H */
