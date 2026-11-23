@@ -132,19 +132,244 @@ function Get-HotdPowerShell {
     Join-Path ([Environment]::SystemDirectory) 'WindowsPowerShell/v1.0/powershell.exe'
 }
 
+function Set-HotdUpdateStatus([string]$Status,[string]$Text) {
+    $pending=$Status+'.new'
+    [IO.File]::WriteAllText($pending,$Text)
+    if ([IO.File]::Exists($Status)) { [IO.File]::Replace($pending,$Status,[NullString]::Value) }
+    else { [IO.File]::Move($pending,$Status) }
+}
+
+function Read-HotdUpdateStatus([string]$Status) {
+    try {
+        $share=[IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete
+        $stream=[IO.File]::Open($Status,'Open','Read',$share)
+        try {
+            $reader=[IO.StreamReader]::new($stream)
+            try { return $reader.ReadToEnd() }
+            finally { $reader.Dispose() }
+        } finally { $stream.Dispose() }
+    } catch [IO.IOException] {}
+}
+
+function Assert-HotdUpdatePending([Diagnostics.Process]$Owner,[string]$Cancel) {
+    if ([IO.File]::Exists($Cancel) -or $Owner.HasExited) {
+        throw [OperationCanceledException]::new('Update cancelled.')
+    }
+}
+
+function Receive-HotdUpdateArchive([string]$Url,[string]$Zip,[Diagnostics.Process]$Owner,[string]$Cancel) {
+    $client=[Net.WebClient]::new()
+    try {
+        $client.Headers['User-Agent']='HOTD-Local-Builder-Updater/1'
+        $download=$client.DownloadFileTaskAsync([uri]$Url,$Zip)
+        $elapsed=[Diagnostics.Stopwatch]::StartNew()
+        while (!$download.IsCompleted) {
+            Assert-HotdUpdatePending $Owner $Cancel
+            if ($elapsed.Elapsed.TotalSeconds -ge 90) { throw 'Downloading the installer timed out.' }
+            Start-Sleep -Milliseconds 200
+        }
+        $download.GetAwaiter().GetResult()
+    } finally {
+        if ($client.IsBusy) { $client.CancelAsync() }
+        $client.Dispose()
+    }
+}
+
+function New-HotdBuildJob {
+    if (!('HotdUpdateBuildJob' -as [type])) {
+        Add-Type -TypeDefinition @"
+using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+
+public sealed class HotdUpdateBuildJob : IDisposable {
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BasicLimits {
+        public long ProcessTime, JobTime;
+        public uint Flags;
+        public UIntPtr MinimumWorkingSet, MaximumWorkingSet;
+        public uint ActiveProcesses;
+        public UIntPtr Affinity;
+        public uint Priority, Scheduling;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IoCounters {
+        public ulong Reads, Writes, Others, ReadBytes, WriteBytes, OtherBytes;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ExtendedLimits {
+        public BasicLimits Basic;
+        public IoCounters Io;
+        public UIntPtr ProcessMemory, JobMemory, PeakProcessMemory, PeakJobMemory;
+    }
+    [DllImport("kernel32.dll", SetLastError=true)]
+    private static extern SafeFileHandle CreateJobObject(IntPtr attributes, string name);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    private static extern bool SetInformationJobObject(SafeFileHandle job, int infoClass,
+        ref ExtendedLimits limits, uint size);
+    [DllImport("kernel32.dll", SetLastError=true)]
+    private static extern bool AssignProcessToJobObject(SafeFileHandle job, IntPtr process);
+
+    private readonly SafeFileHandle handle;
+    public HotdUpdateBuildJob() {
+        handle=CreateJobObject(IntPtr.Zero,null);
+        if (handle.IsInvalid) throw new Win32Exception();
+        const int ExtendedLimitInformation=9;
+        const uint KillOnJobClose=0x2000;
+        ExtendedLimits limits=new ExtendedLimits();
+        limits.Basic.Flags=KillOnJobClose;
+        if (!SetInformationJobObject(handle,ExtendedLimitInformation,ref limits,
+                (uint)Marshal.SizeOf(typeof(ExtendedLimits)))) {
+            Win32Exception error=new Win32Exception();
+            handle.Dispose();
+            throw error;
+        }
+    }
+    public void Attach(Process process) {
+        if (!AssignProcessToJobObject(handle,process.Handle)) throw new Win32Exception();
+    }
+    public void Dispose() { handle.Dispose(); }
+}
+"@
+    }
+    return [HotdUpdateBuildJob]::new()
+}
+
+function Get-HotdBuildProgress([string]$Log,[ref]$Target) {
+    $stream=[IO.File]::Open($Log,'Open','Read',[IO.FileShare]::ReadWrite)
+    try {
+        [void]$stream.Seek(-[Math]::Min($stream.Length,16384),[IO.SeekOrigin]::End)
+        $reader=[IO.StreamReader]::new($stream)
+        try {
+            $last=''
+            foreach ($line in ($reader.ReadToEnd() -split '\r?\n')) {
+                if ($line -match '^=== (.+) ===$') { $last=$Matches[1] }
+                elseif ($line -match '^\+ .*cmake\.exe --build .+?[/\\]build(?:-(openxr|testmenu))? --target ') {
+                    $Target.Value=switch ($Matches[1]) {
+                        openxr { 'OpenXR' }
+                        testmenu { 'Arcade Test Menu' }
+                        default { 'desktop' }
+                    }
+                    $last="Compiling $($Target.Value)"
+                }
+                elseif ($line -match '^\[(\d+/\d+)\] (Building|Linking)') {
+                    $last="Compiling $($Target.Value) ($($Matches[1]))"
+                }
+                elseif ($line -match '^Installing/repairing compiler') { $last='Installing or repairing build tools' }
+                elseif ($line -match '^((?:Installing|Extracting|Generating|Verifying) .{1,110})$') { $last=$Matches[1] }
+            }
+            return $last
+        } finally { $reader.Dispose() }
+    } finally { $stream.Dispose() }
+}
+
+function Invoke-HotdStagedBuild([string]$Setup,[string]$Dump,[string]$Stage,[bool]$OpenXR,
+                               [string]$Work,[Diagnostics.Process]$Owner,[string]$Cancel) {
+    $status=Join-Path $Work 'status.txt'
+    $log=Join-Path $Work 'setup.log'
+    $gate=Join-Path $Work 'build.start'
+    # Setup waits for the gate so even its first child is in the Windows job.
+    # The gate also limits how long the bootstrap waits if the worker dies before attaching it.
+    $boot = {
+        $ErrorActionPreference='Stop'
+        $elapsed=[Diagnostics.Stopwatch]::StartNew()
+        while (![IO.File]::Exists($env:HOTD_BUILD_GATE)) {
+            if ($elapsed.Elapsed.TotalSeconds -ge 30) { exit 1 }
+            Start-Sleep -Milliseconds 50
+        }
+        $options=@{DumpPath=$env:HOTD_BUILD_DUMP;InstallDir=$env:HOTD_BUILD_STAGE;StageUpdate=$true}
+        if ($env:HOTD_BUILD_OPENXR -eq '1') { $options.OpenXR=$true }
+        $global:LASTEXITCODE=0
+        & $env:HOTD_BUILD_SETUP @options
+        exit $LASTEXITCODE
+    }
+    $info=[Diagnostics.ProcessStartInfo]::new()
+    $info.FileName=Get-HotdPowerShell
+    $encoded=[Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($boot.ToString()))
+    $info.Arguments="-NoProfile -ExecutionPolicy Bypass -OutputFormat Text -EncodedCommand $encoded"
+    $info.WorkingDirectory=Split-Path $Setup -Parent
+    $info.UseShellExecute=$false
+    $info.CreateNoWindow=$true
+    $info.RedirectStandardOutput=$info.RedirectStandardError=$true
+    $info.EnvironmentVariables['HOTD_BUILD_GATE']=$gate
+    $info.EnvironmentVariables['HOTD_BUILD_SETUP']=$Setup
+    $info.EnvironmentVariables['HOTD_BUILD_DUMP']=$Dump
+    $info.EnvironmentVariables['HOTD_BUILD_STAGE']=$Stage
+    $info.EnvironmentVariables['HOTD_BUILD_OPENXR']=[string][int]$OpenXR
+
+    $buildJob=New-HotdBuildJob
+    $process=$stdoutFile=$stderrFile=$stdout=$stderr=$null
+    $attached=$false
+    try {
+        Assert-HotdUpdatePending $Owner $Cancel
+        $stdoutFile=[IO.FileStream]::new($log,'Create','Write','ReadWrite',1,$true)
+        $stderrFile=[IO.FileStream]::new((Join-Path $Work 'setup.stderr.log'),'Create','Write','ReadWrite',1,$true)
+        $process=[Diagnostics.Process]::Start($info)
+        $buildJob.Attach($process)
+        $attached=$true
+        $process.PriorityClass='BelowNormal'
+        $stdout=$process.StandardOutput.BaseStream.CopyToAsync($stdoutFile)
+        $stderr=$process.StandardError.BaseStream.CopyToAsync($stderrFile)
+        [IO.File]::WriteAllText($gate,'start')
+        $elapsed=[Diagnostics.Stopwatch]::StartNew()
+        $lastSecond=-1
+        Set-HotdUpdateStatus $status 'Preparing the local build...'
+        $phase='Preparing the local build...'
+        $target='desktop'
+        while (!$process.WaitForExit(200)) {
+            Assert-HotdUpdatePending $Owner $Cancel
+            if ($stdout.IsFaulted -or $stderr.IsFaulted) { throw 'Could not write the setup log.' }
+            $second=[int][Math]::Floor($elapsed.Elapsed.TotalSeconds)
+            if ($second -ne $lastSecond) {
+                $current=Get-HotdBuildProgress $log ([ref]$target)
+                if ($current -and $current -ne $phase) {
+                    $phase=$current
+                    Set-HotdUpdateStatus $status $phase
+                }
+                $lastSecond=$second
+            }
+        }
+        Assert-HotdUpdatePending $Owner $Cancel
+        if ($process.ExitCode) { throw 'Setup could not build the update. See setup.log and setup.stderr.log.' }
+    } finally {
+        $buildJob.Dispose()
+        try {
+            if ($process) {
+                if (!$attached -and !$process.HasExited) { $process.Kill() }
+                [void]$process.WaitForExit(3000)
+            }
+            foreach ($copy in @($stdout,$stderr)) {
+                if ($copy) {
+                    try { [void]$copy.Wait(3000) }
+                    catch { Write-Verbose ('Could not finish the setup log: '+$_.Exception.Message) }
+                }
+            }
+        } finally {
+            if ($process) { $process.Dispose() }
+            if ($stdoutFile) { $stdoutFile.Dispose() }
+            if ($stderrFile) { $stderrFile.Dispose() }
+        }
+    }
+}
+
 function Invoke-HotdUpdateWorker([string]$Request) {
     $ErrorActionPreference = 'Stop'
     $job = [IO.File]::ReadAllText($Request) | ConvertFrom-Json
     $work = [IO.Path]::GetDirectoryName($Request)
     $status = Join-Path $work 'status.txt'
+    $cancel = Join-Path $work 'cancel.txt'
     $game = Get-HotdUpdateGame $job.Game
     $app = [IO.Path]::GetFullPath($job.App)
     $root = [IO.Path]::GetDirectoryName($app)
     $stage = Join-Path $work 'install'
     $ready = $false
     $lock = $null
-    $owner = [Diagnostics.Process]::GetProcessById([int]$job.Owner)
+    $owner = $null
     try {
+        $owner = [Diagnostics.Process]::GetProcessById([int]$job.Owner)
+        Assert-HotdUpdatePending $owner $cancel
         if ([IO.Path]::GetFileName($app) -ne $game.App -or !(Test-Path -LiteralPath (Join-Path $app $game.Exe) -PathType Leaf)) { throw 'The current installation could not be located.' }
         $lock = [IO.File]::Open((Join-Path $root $game.Lock), 'OpenOrCreate', 'ReadWrite', 'None')
         $installed = ConvertTo-HotdVersion ([IO.File]::ReadAllText((Join-Path $app 'hotd-update-version.txt')).Trim())
@@ -161,30 +386,17 @@ function Invoke-HotdUpdateWorker([string]$Request) {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $zip = Join-Path $work 'builder.zip'
         $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -UseBasicParsing -TimeoutSec 90 -Uri $url -OutFile $zip
+        Set-HotdUpdateStatus $status 'Downloading the installer...'
+        Receive-HotdUpdateArchive $url $zip $owner $cancel
+        Assert-HotdUpdatePending $owner $cancel
+        Set-HotdUpdateStatus $status 'Verifying the installer...'
         if ((Get-Item -LiteralPath $zip).Length -ne $job.Package.Size -or
             (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ne $job.Package.Hash) { throw 'Installer ZIP verification failed.' }
+        Set-HotdUpdateStatus $status 'Extracting the verified installer...'
         $builder = Expand-HotdUpdateBundle $zip $work $game.Bundle
         $setup = Join-Path $builder 'setup.ps1'
-        $info = [Diagnostics.ProcessStartInfo]::new()
-        $info.FileName = Get-HotdPowerShell
-        $info.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "{0}" -DumpPath "{1}" -InstallDir "{2}" -StageUpdate' -f $setup,$dump,$stage
         $buildOpenXR = $game.VR -and [IO.File]::Exists((Join-Path $app $game.VR))
-        if ($buildOpenXR) { $info.Arguments += ' -OpenXR' }
-        $info.WorkingDirectory = $builder
-        $info.UseShellExecute = $false
-        $info.CreateNoWindow = $true
-        $info.RedirectStandardOutput = $info.RedirectStandardError = $true
-        [IO.File]::WriteAllText($status, 'Building the update locally. This can take several minutes.')
-        $builderProcess = [Diagnostics.Process]::Start($info)
-        try {
-            $builderProcess.PriorityClass = 'BelowNormal'
-            $stdout = $builderProcess.StandardOutput.ReadToEndAsync()
-            $stderr = $builderProcess.StandardError.ReadToEndAsync()
-            $builderProcess.WaitForExit()
-            [IO.File]::WriteAllText((Join-Path $work 'setup.log'), $stdout.GetAwaiter().GetResult() + $stderr.GetAwaiter().GetResult())
-            if ($builderProcess.ExitCode) { throw 'Setup could not build the update. See setup.log.' }
-        } finally { $builderProcess.Dispose() }
+        Invoke-HotdStagedBuild $setup $dump $stage $buildOpenXR $work $owner $cancel
         $builtApp = Join-Path $stage $game.App
         if (!(Test-Path -LiteralPath (Join-Path $builtApp $game.Exe) -PathType Leaf) -or
             !(Test-Path -LiteralPath (Join-Path $stage $game.Launcher) -PathType Leaf) -or
@@ -194,16 +406,24 @@ function Invoke-HotdUpdateWorker([string]$Request) {
         }
         [IO.File]::WriteAllText((Join-Path $builtApp 'hotd-update-version.txt'), $job.Package.Tag)
         $files = @(Get-HotdManagedPaths $stage $builder $game | Select-Object -Unique)
-        [IO.File]::WriteAllText($status, 'Ready')
+        Assert-HotdUpdatePending $owner $cancel
+        Set-HotdUpdateStatus $status 'Ready'
         $ready = $true
-        if (!$owner.WaitForExit(60000)) { throw 'Close the game menu and retry the update.' }
+        $handoff=[Diagnostics.Stopwatch]::StartNew()
+        while (!$owner.WaitForExit(200)) {
+            if ([IO.File]::Exists($cancel)) { throw [OperationCanceledException]::new('Update cancelled.') }
+            if ($handoff.Elapsed.TotalSeconds -ge 60) { throw 'Close the game menu and retry the update.' }
+        }
+        if ([IO.File]::Exists($cancel) -or ![IO.File]::Exists((Join-Path $work 'apply.txt'))) {
+            throw [OperationCanceledException]::new('Update cancelled.')
+        }
         $gameProcesses = @($game.Exe, $game.VR, $game.Operator) | Where-Object { $_ } |
             ForEach-Object { [IO.Path]::GetFileNameWithoutExtension($_) }
         $running = Get-Process -Name $gameProcesses -ErrorAction SilentlyContinue |
             Where-Object { $_.Path -and [IO.Path]::GetDirectoryName($_.Path) -eq $app }
         if ($running) { throw 'Close the running game before updating.' }
         Install-HotdManagedFiles $stage $root (Join-Path $work 'backup') $files
-        [IO.File]::WriteAllText($status, "Installed $($job.Package.Tag)")
+        Set-HotdUpdateStatus $status "Installed $($job.Package.Tag)"
         try {
             foreach ($name in @($game.Bundle, 'install')) {
                 $folder = Join-Path $work $name
@@ -215,20 +435,92 @@ function Invoke-HotdUpdateWorker([string]$Request) {
             }
             [IO.File]::Delete($zip)
         } catch { Write-Verbose "The update is installed. Temporary files remain in $work." }
+    } catch [OperationCanceledException] {
+        $ready=$false
+        Set-HotdUpdateStatus $status 'Cancelled'
     } catch {
         $message = $_.Exception.Message + "`n`nUpdate files and logs: $work"
-        [IO.File]::WriteAllText($status, 'Error: '+$message)
+        Set-HotdUpdateStatus $status ('Error: '+$message)
         if ($ready) {
             Add-Type -AssemblyName PresentationFramework
             [void][Windows.MessageBox]::Show($message, 'HOTD update', 'OK', 'Error')
         }
     } finally {
         if ($lock) { $lock.Dispose() }
-        $owner.Dispose()
+        if ($owner) { $owner.Dispose() }
     }
     if ($ready -and [IO.File]::Exists((Join-Path $root $game.Launcher))) {
         Start-Process -FilePath (Join-Path $root $game.Launcher) -WorkingDirectory $root
     }
+}
+
+function Show-HotdUpdateDialog($Owner,$Dialog) {
+    $wasTopmost=$Owner.Topmost
+    $Owner.Topmost=$false
+    $Dialog.Topmost=$false
+    try { return $Dialog.ShowDialog() }
+    finally {
+        if ($wasTopmost -and $Owner.IsVisible -and $Owner.IsActive) { $Owner.Topmost=$true }
+    }
+}
+
+function Show-HotdUpdateProgress($Window,[Diagnostics.Process]$Process,[string]$Work,[string]$Title,
+                                 [scriptblock]$ShowDialog,[scriptblock]$ReadStatus) {
+    $progress=[Windows.Window]::new()
+    $progress.Owner=$Window; $progress.Title=$Title; $progress.Width=530
+    $progress.SizeToContent='Height'
+    $progress.WindowStartupLocation='CenterOwner'; $progress.ShowInTaskbar=$false; $progress.ResizeMode='NoResize'
+    $stack=[Windows.Controls.StackPanel]::new(); $stack.Margin=[Windows.Thickness]::new(20)
+    $label=[Windows.Controls.TextBlock]::new(); $label.Text='Downloading and verifying the installer...'; $label.TextWrapping='Wrap'
+    $bar=[Windows.Controls.ProgressBar]::new(); $bar.Height=12; $bar.IsIndeterminate=$true; $bar.Margin=[Windows.Thickness]::new(0,14,0,0)
+    $cancelButton=[Windows.Controls.Button]::new(); $cancelButton.Content='Cancel update'
+    $cancelButton.MinWidth=110; $cancelButton.HorizontalAlignment='Right'; $cancelButton.Margin=[Windows.Thickness]::new(0,16,0,0)
+    $elapsed=[Diagnostics.Stopwatch]::StartNew()
+    $clock=[Windows.Controls.TextBlock]::new(); $clock.Text='Elapsed 00:00:00'; $clock.Margin=[Windows.Thickness]::new(0,8,0,0)
+    [void]$stack.Children.Add($label); [void]$stack.Children.Add($bar)
+    [void]$stack.Children.Add($clock); [void]$stack.Children.Add($cancelButton)
+    $progress.Content=$stack
+    $signal=@{ Close=$false; Install=$false; CancelRequested=$false; Error=$null }
+    $cancel=Join-Path $work 'cancel.txt'
+    $apply=Join-Path $work 'apply.txt'
+    $requestCancel={
+        if ($signal.CancelRequested -or $signal.Close) { return }
+        try {
+            [IO.File]::WriteAllText($cancel,'cancel')
+            $signal.CancelRequested=$true
+            $cancelButton.IsEnabled=$false
+            $label.Text='Cancelling the update...'
+        } catch { $label.Text='Could not request cancellation. Try again.' }
+    }.GetNewClosure()
+    $cancelButton.Add_Click({ & $requestCancel }.GetNewClosure())
+    $progress.Add_Closing({
+        param($sender,$e)
+        if (!$signal.Close) { $e.Cancel=$true; & $requestCancel }
+    }.GetNewClosure())
+    $progress.Add_PreviewKeyDown({
+        param($sender,$e)
+        if ($e.Key -eq 'Escape') { $e.Handled=$true; & $requestCancel }
+    }.GetNewClosure())
+    $poll=[Windows.Threading.DispatcherTimer]::new(); $poll.Interval=[TimeSpan]::FromMilliseconds(400)
+    $status=Join-Path $work 'status.txt'
+    $poll.Add_Tick({
+        $clock.Text='Elapsed '+$elapsed.Elapsed.ToString('hh\:mm\:ss')
+        $text=& $ReadStatus $status
+        if ($text -eq 'Ready' -and !$signal.CancelRequested) {
+            try {
+                [IO.File]::WriteAllText($apply,'apply')
+                $signal.Install=$true; $signal.Close=$true
+            } catch { $label.Text='Waiting to install. You can cancel the update.' }
+        }
+        elseif ($text -eq 'Cancelled') { $signal.Close=$true }
+        elseif ($text -like 'Error:*') { $signal.Error=$text; $signal.Close=$true }
+        elseif ($process.HasExited) { $signal.Error="The updater closed early. Update files and logs: $work"; $signal.Close=$true }
+        elseif ($text -and !$signal.CancelRequested) { $label.Text=$text }
+        if ($signal.Close) { $poll.Stop(); $progress.Close() }
+    }.GetNewClosure())
+    $poll.Start()
+    try { [void](& $ShowDialog $Window $progress) } finally { $poll.Stop() }
+    return $signal
 }
 
 function Add-HotdUpdater($Window, $MainPage, [string]$App, [string]$Edition) {
@@ -257,6 +549,9 @@ function Add-HotdUpdater($Window, $MainPage, [string]$App, [string]$Edition) {
     $parseVersion = ${function:ConvertTo-HotdVersion}
     $validatePackage = ${function:Get-HotdReleasePackage}
     $powerShell = Get-HotdPowerShell
+    $showDialog=${function:Show-HotdUpdateDialog}
+    $showProgress=${function:Show-HotdUpdateProgress}
+    $readStatus=${function:Read-HotdUpdateStatus}
     $showRelease = {
         if (!$state.Release) { return }
         $release = $state.Release
@@ -287,7 +582,7 @@ function Add-HotdUpdater($Window, $MainPage, [string]$App, [string]$Edition) {
         $notes=[Windows.Controls.TextBox]::new(); $notes.IsReadOnly=$true; $notes.TextWrapping='Wrap'
         $notes.VerticalScrollBarVisibility='Auto'; $notes.Text=[string]$release.body
         [void]$panel.Children.Add($notes); $dialog.Content=$panel
-        if ($dialog.ShowDialog() -ne $true) { return }
+        if ((& $showDialog $Window $dialog) -ne $true) { return }
         try {
             $package = & $validatePackage $game $release
             $root = Split-Path -Parent $App
@@ -301,27 +596,8 @@ function Add-HotdUpdater($Window, $MainPage, [string]$App, [string]$Edition) {
             $info.FileName=$powerShell; $info.Arguments='-NoProfile -ExecutionPolicy Bypass -STA -File "{0}" -UpdateRequest "{1}"' -f $script,$request
             $info.WorkingDirectory=$work; $info.UseShellExecute=$false; $info.CreateNoWindow=$true
             $process=[Diagnostics.Process]::Start($info)
-            $progress=[Windows.Window]::new()
-            $progress.Owner=$Window; $progress.Title='Installing HOTD update'; $progress.Width=490; $progress.Height=170
-            $progress.WindowStartupLocation='CenterOwner'; $progress.ShowInTaskbar=$false; $progress.ResizeMode='NoResize'
-            $stack=[Windows.Controls.StackPanel]::new(); $stack.Margin=[Windows.Thickness]::new(20)
-            $label=[Windows.Controls.TextBlock]::new(); $label.Text='Downloading and verifying the installer...'; $label.TextWrapping='Wrap'
-            $bar=[Windows.Controls.ProgressBar]::new(); $bar.Height=12; $bar.IsIndeterminate=$true; $bar.Margin=[Windows.Thickness]::new(0,14,0,0)
-            [void]$stack.Children.Add($label); [void]$stack.Children.Add($bar); $progress.Content=$stack
-            $signal=@{ Close=$false; Install=$false; Error=$null }
-            $progress.Add_Closing({ param($sender,$e) $e.Cancel=!$signal.Close }.GetNewClosure())
-            $poll=[Windows.Threading.DispatcherTimer]::new(); $poll.Interval=[TimeSpan]::FromMilliseconds(400)
-            $status=Join-Path $work 'status.txt'
-            $poll.Add_Tick({
-                $text = if ([IO.File]::Exists($status)) { try { [IO.File]::ReadAllText($status) } catch {} }
-                if ($text -eq 'Ready') { $signal.Install=$true }
-                elseif ($text -like 'Error:*') { $signal.Error=$text }
-                elseif ($process.HasExited) { $signal.Error="The updater closed early. Update files and logs: $work" }
-                elseif ($text) { $label.Text=$text }
-                if ($signal.Install -or $signal.Error) { $poll.Stop(); $signal.Close=$true; $progress.Close() }
-            }.GetNewClosure())
-            $poll.Start()
-            try { [void]$progress.ShowDialog() } finally { $poll.Stop(); $process.Dispose() }
+            try { $signal=& $showProgress $Window $process $work 'Installing HOTD update' $showDialog $readStatus }
+            finally { $process.Dispose() }
             if ($signal.Install) { $Window.Close() }
             elseif ($signal.Error) { [void][Windows.MessageBox]::Show($Window,$signal.Error,'HOTD update','OK','Error') }
         } catch { [void][Windows.MessageBox]::Show($Window,$_.Exception.Message,'HOTD update','OK','Error') }

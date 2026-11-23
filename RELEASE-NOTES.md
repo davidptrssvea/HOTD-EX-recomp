@@ -1,19 +1,9 @@
-# HOTD EX v1.1.3 - Game Library
+# HOTD EX v1.1.4 - Updater progress and cancellation
 
-Windows local builder. Setup builds from your own supported extracted arcade dump. The ZIP contains builder files and no game data.
-
-## Game Library
-
-Open **Game Library** from the main menu to switch between installed copies of **HOTD4**, **HOTD4 Special**, **HOTD EX**, and **Scarlet Dawn**.
-
-- **Play** starts the game with its saved settings. **Settings** opens that game's own settings. **Menu** opens its regular launcher for features such as chapter selection.
-- The library lists complete installations. Setup registers new installations, and the library checks nearby folders and remembered Setup locations.
-- If an existing game is missing, choose **Locate installed game...** and select its installation folder. Older launchers may expose fewer shortcuts until updated. Each game keeps its own settings, controls, and saves.
+- The launcher shows the current update step and elapsed time. You can Alt+Tab to another app while the update runs.
+- Follow the download, toolchain preparation, and local build. Compilation shows completed and total steps when available, including Arcade Test Menu and OpenXR on supported installations.
+- Choose **Cancel** or close the progress window to stop before installation. Cancelling also stops the build processes.
 
 ## Updating
 
-Choose **Updates > Download and install** in the launcher. You can also extract the builder ZIP and run **Setup.cmd**. Use your own supported dump for a fresh installation.
-
-## Verification
-
-Tested on Windows with all four games installed, including missing and incomplete installations, older launcher discovery, and per-game settings. All four games started from the rebuilt launchers.
+Choose **Updates > Download and install** in the launcher. If your current launcher still uses the old update dialog, extract this release ZIP and run **Setup.cmd** to update your existing installation.

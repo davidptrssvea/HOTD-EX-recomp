@@ -28,7 +28,7 @@
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "f4ce2a876fe1206df88d6058eef64806c9c8da8ca9ae42135840608b06af620a"
+      "sha256": "9205d8f827368eb2569573a96e1a73e01ee79c186897928187c0e49a226d17c4"
     },
     {
       "path": "Setup.cmd",
@@ -1060,7 +1060,7 @@
     },
     {
       "path": "ui/hotd-update-version.txt",
-      "sha256": "b8af634a66d091d1c124675fbe2208a3c4d69db36832f7dcc4a99c6c30404cf0"
+      "sha256": "d910b29f42acd3fdf17c8e6e8b3fc6d57a2959e7145502dbca1877e3368486dc"
     },
     {
       "path": "ui/hotd-game-library.ps1",
@@ -1068,7 +1068,7 @@
     },
     {
       "path": "ui/hotd-update.ps1",
-      "sha256": "df5ef5432ac9c8325b7f69c62e503ff21eb78ab90c3a6c60f8c3fe136c339211"
+      "sha256": "55c85f910b857420223e9c0aba73ec4b9cb1dae4cc101c3b3fc2bca8bfea9cc2"
     },
     {
       "path": "ui/hotdex-config.ps1",
