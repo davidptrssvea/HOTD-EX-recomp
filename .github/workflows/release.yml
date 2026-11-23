@@ -2,6 +2,8 @@ name: Release
 on:
   push:
     tags: ['v*']
+    branches: [main]
+    paths: ['.github/workflows/release.yml']
 
 permissions:
   contents: write
@@ -16,14 +18,40 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Build and verify the source-only release
-        run: python3 .release/package.py "$GITHUB_REF_NAME" "$RUNNER_TEMP"
-      - name: Publish the verified package
-        env:
-          GH_TOKEN: ${{ github.token }}
+        with:
+          fetch-depth: 0
+      - name: Select the exact tagged version
+        id: version
         run: |
           set -euo pipefail
-          name="HOTDEX-Local-Builder-$GITHUB_REF_NAME.zip"
-          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/$name" "$RUNNER_TEMP/$name.sha256" \
-            --verify-tag --draft --title "HOTD EX Local Builder $GITHUB_REF_NAME" --notes-file RELEASE-NOTES.md
-          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+          tag="$GITHUB_REF_NAME"
+          if [ "$GITHUB_REF_TYPE" = branch ]; then
+            tag="$(tr -d '\r\n' < ui/hotd-update-version.txt)"
+          fi
+          [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          if ! git rev-parse --verify "refs/tags/$tag^{commit}" >/dev/null; then
+            echo "No source tag for $tag yet."
+            exit 0
+          fi
+          git checkout --detach "refs/tags/$tag^{commit}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Build and verify the source-only release
+        if: steps.version.outputs.tag != ''
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: python3 .release/package.py "$RELEASE_TAG" "$RUNNER_TEMP"
+      - name: Publish the verified package
+        if: steps.version.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null || true)" = false ]; then
+            echo "$RELEASE_TAG is already published."
+            exit 0
+          fi
+          name="HOTDEX-Local-Builder-$RELEASE_TAG.zip"
+          gh release create "$RELEASE_TAG" "$RUNNER_TEMP/$name" "$RUNNER_TEMP/$name.sha256" \
+            --verify-tag --draft --title "HOTD EX Local Builder $RELEASE_TAG" --notes-file RELEASE-NOTES.md
+          gh release edit "$RELEASE_TAG" --draft=false --latest
