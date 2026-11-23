@@ -1,0 +1,29 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hotdex-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and verify the source-only release
+        run: python3 .release/package.py "$GITHUB_REF_NAME" "$RUNNER_TEMP"
+      - name: Publish the verified package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          name="HOTDEX-Local-Builder-$GITHUB_REF_NAME.zip"
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/$name" "$RUNNER_TEMP/$name.sha256" \
+            --verify-tag --draft --title "HOTD EX Local Builder $GITHUB_REF_NAME" --notes-file RELEASE-NOTES.md
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
