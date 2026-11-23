@@ -154,6 +154,8 @@ function Show-HotdexStartMenu {
         }
     })
     & $loadSettings;& $showPage $(if($InitialPage -eq 'Settings'){'OptionsPage'}else{'MainPage'})
+    . (Join-Path $RecompDir 'hotd-update.ps1')
+    Add-HotdUpdater $window $ui.MainPage $RecompDir EX
     if($Inspect){& $Inspect $window $ui $showPage $saveSettings $loadSettings;return}
     $window.Add_ContentRendered({if($session.Page -eq 'MainPage'){[void]$ui.Play.Focus()}else{[void]$ui.Resolution.Focus()}})
     [void]$window.ShowDialog()

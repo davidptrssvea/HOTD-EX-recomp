@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$DumpPath,[string]$InstallDir,[string]$ToolchainPath,[int]$Jobs=0,[switch]$ValidateOnly,[switch]$NoDownload,[switch]$RepairTools)
+param([string]$DumpPath,[string]$InstallDir,[string]$ToolchainPath,[int]$Jobs=0,[switch]$ValidateOnly,[switch]$NoDownload,[switch]$RepairTools,[switch]$StageUpdate)
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
@@ -141,7 +141,9 @@ try {
     Set-BuilderPhase '5/6 Local generation, compilation and installation'
     Write-Host 'Generating and compiling HOTD EX locally. This can take several minutes...'
     $buildArgs = @((Join-Path $PSScriptRoot 'tools\build.py'),'--dump',$dump,'--output',$InstallDir,'--toolchain',$ToolchainPath,'--jobs',[string]$Jobs)
+    if($StageUpdate){$buildArgs += '--stage-update'}
     Invoke-Checked $python $buildArgs
+    if($StageUpdate){return}
     Set-BuilderPhase '6/6 Local menu image and completion'
     $installedRoot=[IO.Path]::GetFullPath($InstallDir)
     try {

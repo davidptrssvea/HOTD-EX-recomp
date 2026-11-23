@@ -36,7 +36,7 @@ def atomic_copy(source,destination):
     finally:stage.unlink(missing_ok=True)
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--dump',required=True);ap.add_argument('--output',required=True);ap.add_argument('--toolchain',required=True);ap.add_argument('--jobs',type=int,default=0);ap.add_argument('--validate-only',action='store_true');a=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument('--dump',required=True);ap.add_argument('--output',required=True);ap.add_argument('--toolchain',required=True);ap.add_argument('--jobs',type=int,default=0);ap.add_argument('--validate-only',action='store_true');ap.add_argument('--stage-update',action='store_true');a=ap.parse_args()
     dump=find_dump(a.dump);print('Verified The House of the Dead EX:',dump,flush=True)
     if a.validate_only:return
     out=Path(a.output).resolve();tool=Path(a.toolchain).resolve();bin=tool/'mingw64/bin'
@@ -91,11 +91,12 @@ def main():
             if file.is_file():dlls[name]=file;pending.append(file)
             elif not (system/name).is_file() and not name.lower().startswith(('api-ms-','ext-ms-')):raise ValueError('Unresolved runtime dependency: '+name)
     out.mkdir(parents=True,exist_ok=True);app=out/'HOTDEX_Recomp';app.mkdir(exist_ok=True)
-    localdump=out/'disk0';print('Copying your arcade data into the installation (the source remains unchanged)...',flush=True)
-    shutil.copytree(dump/'fs',localdump/'fs',dirs_exist_ok=True)
-    for name in SPEC['files']:atomic_copy(dump/name,localdump/name)
-    # Seed a private cabinet save once; an update never overwrites it.
-    if not (app/'lindbergh_nvram.bin').exists() and (dump/'elf/lindbergh_nvram.bin').is_file():shutil.copy2(dump/'elf/lindbergh_nvram.bin',app/'lindbergh_nvram.bin')
+    if not a.stage_update:
+        localdump=out/'disk0';print('Copying your arcade data into the installation (the source remains unchanged)...',flush=True)
+        shutil.copytree(dump/'fs',localdump/'fs',dirs_exist_ok=True)
+        for name in SPEC['files']:atomic_copy(dump/name,localdump/name)
+        # Seed a private cabinet save once; an update never overwrites it.
+        if not (app/'lindbergh_nvram.bin').exists() and (dump/'elf/lindbergh_nvram.bin').is_file():shutil.copy2(dump/'elf/lindbergh_nvram.bin',app/'lindbergh_nvram.bin')
     for name,file in dlls.items():atomic_copy(file,app/name)
     atomic_copy(executable,app/'hotdex-desktop.exe');run([bin/'strip.exe',app/'hotdex-desktop.exe'])
     for file in (ROOT/'ui').iterdir():

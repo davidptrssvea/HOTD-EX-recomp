@@ -20,11 +20,11 @@
     },
     {
       "path": "README.md",
-      "sha256": "cea9928ba038d164179002cc6908ed9a0086c65c2dc3b7d57799d142e67ef8e6"
+      "sha256": "f0c914f6363296a469751e25d0172a9c2a20c0c672974c2f5c6edd58cd58c3dc"
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "e950b312f1158618c20c296f50e803b3bef8a1ce2e73fb3baa7bb9edb170d1db"
+      "sha256": "a2b765bde393d210e4caea57aa1f96a832bd807b8ee723c0343fed6713dcf409"
     },
     {
       "path": "Setup.cmd",
@@ -32,7 +32,7 @@
     },
     {
       "path": "setup.ps1",
-      "sha256": "00c21b3dc1d7bdfd5c065bf37f6f9ede444ebec18248942dca9f69b7e862f349"
+      "sha256": "a5ef47022b84b10fcbf53cb0ccacf7a3a1a248b03d8394b827ad0ec1ed74c7e3"
     },
     {
       "path": "source/CMakeLists.txt",
@@ -972,7 +972,7 @@
     },
     {
       "path": "tools/build.py",
-      "sha256": "78160f5aba7c1f8097464f72503d7a7460bf341855063e18630384c8f2620d3b"
+      "sha256": "00f090c1e365a2d9cda2bd96d163f9267a54fcc8f4e9ffd5dc89ac3ff2f35ffb"
     },
     {
       "path": "tools/build_support.py",
@@ -1019,6 +1019,14 @@
       "sha256": "312c88b19e51cd0b3d45d4fb5673bd9627935ce4994d37427167ff35f3e6567e"
     },
     {
+      "path": "ui/hotd-update-version.txt",
+      "sha256": "145aabe1106cd123b7123194b94bcf8bff4442caf1c5336c3e2c9c671f4895ca"
+    },
+    {
+      "path": "ui/hotd-update.ps1",
+      "sha256": "0823aaba3fb0097d197d43ab14617186c8a84323c439c23e1c0af6ee8def380f"
+    },
+    {
       "path": "ui/config_menu.ps1",
       "sha256": "cadea73b29e43ddb48988aa6bbc0c3359382f49d5549d03bbb75a05a990e06bf"
     },
@@ -1036,7 +1044,7 @@
     },
     {
       "path": "ui/hotdex-startmenu.ps1",
-      "sha256": "9a7ac39ce473f2f0e80b565d6dbade896eb4c1bf02e2aed0a64b8064f42d10f4"
+      "sha256": "faf1fe6ef4711171fbda08ab1c9d53a9052b851dbeb2f9dc0f4e063a7f5487ba"
     },
     {
       "path": "ui/lindbergh.ini",

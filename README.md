@@ -86,3 +86,11 @@ After a successful build you may delete the extracted builder (including its loc
 ## Source and licenses
 
 The Lindbergh runtime, pcrecomp lifter and port source/licenses are under `source`. Setup generates game-specific C and library images from your verified files locally; generated code belongs to your installation/build and must not be redistributed. Dependency license notices are copied into the installed `HOTDEX_Recomp\licenses` folder. Package integrity checks detect accidental changes; they are not a substitute for obtaining this builder from a trusted source.
+
+## Menu updates
+
+The main menu checks GitHub for the latest stable release in the background. Open **Updates** to read the release notes and choose whether to download and install a newer version. Setup verifies the package and builds the update locally from the arcade dump in your installation. The menu reopens after installation.
+
+The update replaces the launcher and runtime files. It keeps settings, cabinet saves, the existing game dump. The update folder beside the installation holds the Setup log and the previous versions of replaced files. Internet access and free disk space for a local build are required.
+
+To add the updater to an installation from an earlier release, run this builder's Setup and select the existing installation folder. Update `ui/hotd-update-version.txt` to match the tag when preparing a release.
