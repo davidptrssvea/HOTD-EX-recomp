@@ -1,0 +1,2 @@
+# The package manifest verifies exact bytes; keep ZIP and Git checkout identical.
+* -text

@@ -3,6 +3,10 @@
   "format": 1,
   "files": [
     {
+      "path": ".gitattributes",
+      "sha256": "43592c392f871c3dc292511886ac98f7da6b95c12456c949edfc4b2420f4b582"
+    },
+    {
       "path": ".gitignore",
       "sha256": "593b79510f170f14e385c48310c27cf7f65b0a52f84eb6500dc286a596d6e22b"
     },
