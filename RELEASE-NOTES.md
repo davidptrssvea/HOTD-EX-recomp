@@ -1,19 +1,19 @@
-# HOTD EX v1.1.2 — V-Sync
+# HOTD EX v1.1.3 - Game Library
 
-Full Windows local builder. **No game assets, original arcade executables or generated game code are included.** Setup builds locally using your own supported extracted arcade dump.
+Windows local builder. Setup builds from your own supported extracted arcade dump. The ZIP contains builder files and no game data.
 
-- **V-Sync Off / On:** choose it in Settings > Graphics, save, and restart the game. Off remains the default. The active driver setting is recorded in the game log.
+## Game Library
 
-All previous features are retained, including the built-in launcher updater and remembered dump/installation paths with Browse. Existing settings, bindings, cabinet saves are preserved when updating.
+Open **Game Library** from the main menu to switch between installed copies of **HOTD4**, **HOTD4 Special**, **HOTD EX**, and **Scarlet Dawn**.
 
-The desktop display options do not change OpenXR headset timing or its view. This release does not claim a new physical-headset or CRT hardware test.
+- **Play** starts the game with its saved settings. **Settings** opens that game's own settings. **Menu** opens its regular launcher for features such as chapter selection.
+- The library lists complete installations. Setup registers new installations, and the library checks nearby folders and remembered Setup locations.
+- If an existing game is missing, choose **Locate installed game...** and select its installation folder. Older launchers may expose fewer shortcuts until updated. Each game keeps its own settings, controls, and saves.
 
 ## Updating
 
-Open **Updates** in the launcher and choose **Download and install**. The updater rebuilds locally using your installed dump and reopens the menu afterward.
-
-Alternatively, extract the new full builder ZIP, run **Setup.cmd**, select the same supported dump and choose your existing installation folder. Your existing settings and saves are kept. Setup remembers the last successful folders and still offers Browse.
+Choose **Updates > Download and install** in the launcher. You can also extract the builder ZIP and run **Setup.cmd**. Use your own supported dump for a fresh installation.
 
 ## Verification
 
-Real Windows/OpenGL runs accepted both V-Sync settings and read back the active driver interval. Complete WPF menu checks cover saving/reopening preferences, visible controls, bottom buttons and updater dependencies.
+Tested on Windows with all four games installed, including missing and incomplete installations, older launcher discovery, and per-game settings. All four games started from the rebuilt launchers.

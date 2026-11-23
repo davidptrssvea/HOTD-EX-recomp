@@ -28,7 +28,7 @@
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "c0949002833bea1157e924478fe32bed1ff9d7e66c2617e160afd11b79eebfd8"
+      "sha256": "f4ce2a876fe1206df88d6058eef64806c9c8da8ca9ae42135840608b06af620a"
     },
     {
       "path": "Setup.cmd",
@@ -1060,7 +1060,7 @@
     },
     {
       "path": "ui/hotd-update-version.txt",
-      "sha256": "cf60e673ce0edcaca3188da9b6361ac27af0c2705f0fdc93529a0b95169fef97"
+      "sha256": "b8af634a66d091d1c124675fbe2208a3c4d69db36832f7dcc4a99c6c30404cf0"
     },
     {
       "path": "ui/hotd-game-library.ps1",
