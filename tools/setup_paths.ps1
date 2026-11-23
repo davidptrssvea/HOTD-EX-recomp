@@ -51,6 +51,7 @@ function New-BuilderPathDialog([string]$Edition,[string]$DumpPath,[string]$Insta
     $intro=[Windows.Forms.Label]::new();$intro.Text='Confirm your folders, or use Browse to select different locations.'
     $intro.SetBounds(18,16,650,28);$intro.Anchor='Top,Left,Right';$form.Controls.Add($intro)
     $controls=@{Form=$form}
+    $browseFolder=${function:Select-BuilderSetupFolder}
     $row=0
     foreach($key in 'DumpPath','InstallDir') {
         $y=54+$row*72
@@ -60,7 +61,7 @@ function New-BuilderPathDialog([string]$Edition,[string]$DumpPath,[string]$Insta
         $text.SetBounds(18,($y+25),544,27);$text.Anchor='Top,Left,Right';$form.Controls.Add($text);$controls[$key]=$text
         $button=[Windows.Forms.Button]::new();$button.Text='Browse...';$button.SetBounds(572,($y+23),100,31);$button.Anchor='Top,Right'
         $description=$label.Text
-        $button.Add_Click({$folder=Select-BuilderSetupFolder $description $text.Text;if($folder){$text.Text=$folder}}.GetNewClosure())
+        $button.Add_Click({$folder=& $browseFolder $description $text.Text;if($folder){$text.Text=$folder}}.GetNewClosure())
         $form.Controls.Add($button);$controls[$key+'Browse']=$button;$row++
     }
     $status=[Windows.Forms.Label]::new();$status.SetBounds(18,201,450,48);$status.Anchor='Bottom,Left,Right'

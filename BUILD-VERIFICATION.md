@@ -56,3 +56,5 @@ Windows PowerShell 5.1 checks cover separate Normal/Special/EX histories, spaces
 Real EX Setup was also run with the shared helper: a staged build created no history; a successful ordinary installation recorded the verified dump/install paths; a failed installation, ValidateOnly and a subsequent StageUpdate left that history byte-identical. Existing INI, cabinet save, local background and profile data remained byte-identical. Normal/Special package and supported-dump validation and existing Windows installer recovery checks passed. This tests the shared helper's real Setup integration without claiming a fresh native recompilation of unchanged Normal game code.
 
 All release packages retain the existing verified launcher updater. Only paths are remembered; no game assets are included.
+
+Browse callbacks are tested in both direct -File and dot-sourced Windows PowerShell invocation; the picker delegate is captured explicitly so it remains available across UI event scopes.

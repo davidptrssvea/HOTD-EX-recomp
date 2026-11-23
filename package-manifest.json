@@ -12,7 +12,7 @@
     },
     {
       "path": "BUILD-VERIFICATION.md",
-      "sha256": "ea0c3d64c138e150355cdb4ff468fccce30d187af41ca65037f6a7ae95cb7373"
+      "sha256": "707bc675653badd25e018a7f723b7f3d2c92b9f15705cb061b292c1abb469db6"
     },
     {
       "path": "LICENSE",
@@ -1028,7 +1028,7 @@
     },
     {
       "path": "tools/setup_paths.ps1",
-      "sha256": "a8d65f8257a4bb2ae69c5a800a1b91f4121e0c23338feab7ebf8bb2ce583b137"
+      "sha256": "63432d3155bba6dfd6787289b4acce991a530b58ee0ac5a161f2a6b1198f537c"
     },
     {
       "path": "tools/setup_support.ps1",
