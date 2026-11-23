@@ -18,7 +18,7 @@ In **Settings > Graphics**, choose **V-Sync > On** to synchronize desktop presen
 1. Extract the entire builder ZIP into a short, writable folder, for example `D:\HOTDEX-Builder`. Do not run it inside the ZIP.
 2. Run **Setup.cmd** and select your extracted HOTD EX dump (`disk0`, its parent, or `disk0\elf`). A lone ELF is insufficient: the complete `fs` data and both original sound libraries are required.
 3. Leave Setup open while it verifies files, obtains its isolated build tools, generates the game code and compiles it locally. Progress and the full setup-log path are shown in the console.
-4. Open **HOTDEX-PC\Play HOTD EX.exe**. The fullscreen menu includes Play Arcade, Settings, Arcade Test Menu, Updates and Other Games when installed HOTD4/Special launchers are found.
+4. Open **HOTDEX-PC\Play HOTD EX.exe**. The fullscreen menu includes Play Arcade, Settings, Arcade Test Menu, Updates and the Game Library.
 
 To choose a different installation or tool-cache location:
 
@@ -27,6 +27,10 @@ Setup.cmd -DumpPath "D:\My arcade dump" -InstallDir "D:\Games\HOTDEX-PC" -Toolch
 ```
 
 The default installation is `HOTDEX-PC` beside Setup. Build tools default to `%LOCALAPPDATA%\HOTDEX-Builder\msys64`. No administrator access, system Python, Git, Visual Studio or separate xz tool is required. The original dump remains unchanged.
+
+## Game Library
+
+Open **Game Library** in the main menu to choose between installed copies of HOTD4, HOTD4 Special, HOTD EX and Scarlet Dawn. **Play** starts the game using its saved settings. **Settings** opens that game's own settings, and **Menu** opens its regular launcher for features such as chapter selection. Older installations may offer **Menu** only. Setup registers each installation for your Windows account. The library also checks nearby folders and remembered Setup locations. Use **Locate installed game...** if an existing installation is missing.
 
 ## Supported input
 

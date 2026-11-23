@@ -145,7 +145,7 @@
    <StackPanel Name="MainPage">
     <Button Name="Play" Content="Play Arcade"/><Button Name="Options" Content="Settings"/>
     <Button Name="TestMenu" Content="Arcade Test Menu"/><Button Name="RestartArcade" Content="Restart Arcade" Visibility="Collapsed"/><Button Name="ReturnMain" Content="Main Menu" Visibility="Collapsed"/>
-    <Button Name="OtherGames" Content="Other Games" Visibility="Collapsed"/><Button Name="Quit" Content="Quit"/>
+    <Button Name="Quit" Content="Quit"/>
     <TextBlock Text="Arrow keys / Enter to select. Esc to return." Foreground="#ADB4C2" FontSize="13" Margin="0,8,0,0"/>
    </StackPanel>
    <StackPanel Name="OptionsPage" Visibility="Collapsed">
@@ -222,10 +222,6 @@
     <ScrollViewer Height="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Name="BindingList"/></ScrollViewer>
     <Button Name="ResetBindings" Content="Restore Default Bindings" Height="34" FontSize="15" Margin="0,10,0,8"/>
     <Button Name="BindingsBack" Content="Back" Height="40" FontSize="17"/>
-   </StackPanel>
-   <StackPanel Name="OtherPage" Visibility="Collapsed">
-    <TextBlock Text="Other Games" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
-    <StackPanel Name="OtherGameList"/><Button Name="OtherBack" Content="Back" Height="44" FontSize="18"/>
    </StackPanel>
   </StackPanel>
  </Grid></Viewbox>

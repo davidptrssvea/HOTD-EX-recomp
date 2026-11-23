@@ -24,7 +24,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "1d06cd6648edfd2294b042aabbfb9dbb2bfd21d3df4f0d87e517b97cb54a5ade"
+      "sha256": "4f0e031da44269d3a3e81cdf5edb5509e45fb1bf94094859a5c8dd75ea162ac1"
     },
     {
       "path": "RELEASE-NOTES.md",
@@ -996,7 +996,7 @@
     },
     {
       "path": "tools/build.py",
-      "sha256": "987e73c4231eeabecd76f5a0333f430ce085a3259e5cd91d1c3f4f55965c5a43"
+      "sha256": "3c127e243f521d5d5a17863325f052cab8f219b633b6ecf91826d98e35b2370a"
     },
     {
       "path": "tools/build_support.py",
@@ -1063,6 +1063,10 @@
       "sha256": "cf60e673ce0edcaca3188da9b6361ac27af0c2705f0fdc93529a0b95169fef97"
     },
     {
+      "path": "ui/hotd-game-library.ps1",
+      "sha256": "f155a81cc7c465d5bf90b72b38642c94d936edde1eb01ab51f2c1761f6c22f31"
+    },
+    {
       "path": "ui/hotd-update.ps1",
       "sha256": "df5ef5432ac9c8325b7f69c62e503ff21eb78ab90c3a6c60f8c3fe136c339211"
     },
@@ -1080,11 +1084,11 @@
     },
     {
       "path": "ui/hotdex-menu.xaml",
-      "sha256": "5beb84e4a8e292aeb9ae0fb997f4f062487bd14617a5306c8010d501b2b37a01"
+      "sha256": "351d2fa8a1895c9b70e81e397475016dbecaeedd9c1787ba21e005dc39b0eeb3"
     },
     {
       "path": "ui/hotdex-startmenu.ps1",
-      "sha256": "b77bdfc7e1cabc48fb2c47173f639b0f2a7d4bc6bb64e2ae29acae7533854269"
+      "sha256": "6228f482247cc65366dd37b65fe411eaf1db42196f9d7b758f848ca9624e773d"
     },
     {
       "path": "ui/lindbergh.ini",

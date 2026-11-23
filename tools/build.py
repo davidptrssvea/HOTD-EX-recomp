@@ -134,6 +134,12 @@ def main():
     for label,path in [('ports',source/'LICENSE'),('lindberghrecomp',source/'lindberghrecomp/LICENSE'),('pcrecomp',source/'lindberghrecomp/pcrecomp/LICENSE')]:atomic_copy(path,licenses/(label+'.txt'))
     for directory in (bin.parent/'share/licenses').glob('*'):
         if directory.is_dir():shutil.copytree(directory,licenses/'dependencies'/directory.name,dirs_exist_ok=True)
+    if not a.stage_update:
+        try:
+            run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File',app/'hotd-game-library.ps1',
+                 '-RegisterOnly','-LibraryRecompDir',app,'-LibraryGame','EX'])
+        except subprocess.CalledProcessError:
+            print('The game was installed, but automatic library registration failed. Use Locate installed game in the Game Library.',flush=True)
     atomic_copy(ROOT/'README.md',out/'README.md')
     (out/'local-build.json').write_text(json.dumps({'built_locally':True,'elf_sha256':SPEC['files']['elf/hodexRI.elf'],'generator_signature':signature,'package_manifest_sha256':digest(ROOT/'package-manifest.json'),'executable_sha256':digest(app/'hotdex-desktop.exe'),'built_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())},indent=2))
     print('Build complete: '+str(out/'Play HOTD EX.exe'),flush=True)

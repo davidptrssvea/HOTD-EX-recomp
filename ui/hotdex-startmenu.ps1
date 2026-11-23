@@ -41,7 +41,7 @@ function Show-HotdexStartMenu {
         $brush.Stretch='UniformToFill';$brush.AlignmentX='Left';$ui.Backdrop.Background=$brush
     }
     $session=@{Page='MainPage';Result=0;Capture=$null;Bindings=@{}}
-    $pages='MainPage','OptionsPage','GraphicsPage','MousePage','AudioPage','OtherPage','DevicesPage','BindingsPage'
+    $pages='MainPage','OptionsPage','GraphicsPage','MousePage','AudioPage','DevicesPage','BindingsPage'
     $context=@{
         OptionsPage=@('MAKE IT YOURS','Choose your render resolution and display mode, then fine-tune graphics, mouse input and audio. Save to keep your changes.')
         GraphicsPage=@('A CLEARER VIEW','The 3D scene renders at your selected resolution. Anti-aliasing smooths edges; anisotropic filtering keeps angled surfaces clearer. V-sync applies after restarting Arcade. Original artwork retains its original detail.')
@@ -49,7 +49,6 @@ function Show-HotdexStartMenu {
         AudioPage=@('SET THE VOLUME','Enable or mute the game and choose your master volume. Your selection is used by both launch shortcuts.')
         DevicesPage=@('TWO PLAYERS, TWO DEVICES','For two lightguns, select Lightgun (Raw Input) and assign a different device to each player. Auto chooses distinct absolute guns. For a gun and a Windows/Parsec mouse, choose the mixed co-op mode; the mouse controls P2. Use Space / Right Ctrl for the two pedals by default.')
         BindingsPage=@('YOUR CABINET, YOUR CONTROLS','Click a binding, then press a key or mouse button. Esc cancels capture. Duplicate assignments are rejected. Mouse bindings are available for shoot, reload and pedal. Save your changes on the Settings page.')
-        OtherPage=@('THE ARCADE COLLECTION','Open another installed game with its own launcher, settings and save data.')
     }
     $showPage={param([string]$Page)
         foreach($p in $pages){$ui[$p].Visibility=if($p -eq $Page){'Visible'}else{'Collapsed'}}
@@ -171,7 +170,7 @@ function Show-HotdexStartMenu {
     $ui.TestMenu.IsEnabled=[IO.File]::Exists((Join-Path $RecompDir 'hotdex-testmenu.exe')) -and [IO.File]::Exists((Join-Path $operatorDump 'elf/hodextestR.elf'))
     $ui.TestMenu.ToolTip=if($ui.TestMenu.IsEnabled){'Ends the current game and opens the arcade operator settings. Service selects; Test confirms.'}else{'Requires the supported hodextestR.elf from your dump. Rerun Setup with that file present.'}
     [Windows.Controls.ToolTipService]::SetShowOnDisabled($ui.TestMenu,$true)
-    if($InGame){$window.AllowsTransparency=$true;$window.Background=[Windows.Media.Brushes]::Transparent;$ui.Backdrop.Background=$null;$ui.Play.Content='Resume';$ui.RestartArcade.Visibility='Visible';$ui.ReturnMain.Visibility='Visible';$ui.RestartNotice.Visibility='Visible';$ui.SavePlay.Visibility='Collapsed';$ui.OtherGames.Visibility='Collapsed';$ui.CollectionCaption.Text='PAUSED';$ui.ControlFooter.Text='The game clock and audio are paused. Save, then Resume or Restart Arcade.'
+    if($InGame){$window.AllowsTransparency=$true;$window.Background=[Windows.Media.Brushes]::Transparent;$ui.Backdrop.Background=$null;$ui.Play.Content='Resume';$ui.RestartArcade.Visibility='Visible';$ui.ReturnMain.Visibility='Visible';$ui.RestartNotice.Visibility='Visible';$ui.SavePlay.Visibility='Collapsed';$ui.CollectionCaption.Text='PAUSED';$ui.ControlFooter.Text='The game clock and audio are paused. Save, then Resume or Restart Arcade.'
       if($GameWindow){$bounds=[HotdexPlatform]::Bounds([intptr]$GameWindow);if($bounds){$window.Left=$bounds[0];$window.Top=$bounds[1];$window.Width=$bounds[2];$window.Height=$bounds[3]};$owner=[Windows.Interop.WindowInteropHelper]::new($window);$owner.Owner=[intptr]$GameWindow}
     }
     $ui.Play.Add_Click({& $startGame});$ui.Quit.Add_Click({if($InGame){$session.Result=77};$window.Close()})
@@ -186,34 +185,13 @@ function Show-HotdexStartMenu {
     $ui.MouseMode.Add_SelectionChanged({& $updateGrab;if(!$session.SyncMode -and $ui.InputMode.SelectedItem -and [int]$ui.InputMode.SelectedItem.Tag -lt 2){$ui.InputMode.SelectedIndex=$ui.MouseMode.SelectedIndex}})
     $ui.Sensitivity.Add_ValueChanged({$ui.SensitivityValue.Text=('{0:0.00}' -f $ui.Sensitivity.Value)})
     $ui.Volume.Add_ValueChanged({$ui.VolumeValue.Text=([string][int]$ui.Volume.Value)+'%'})
-    $library=@{}
-    try{$registry=Join-Path $env:LOCALAPPDATA 'HOTD4-Launcher/installations.json';if([IO.File]::Exists($registry)){$registered=[IO.File]::ReadAllText($registry)|ConvertFrom-Json;$library.Normal=$registered.Normal;$library.Special=$registered.Special}}catch{}
-    $near=Join-Path (Split-Path (Split-Path $RecompDir -Parent) -Parent) 'HOTD4'
-    foreach($game in 'Normal','Special'){
-        $folder=if($game -eq 'Normal'){'HOTD4_Recomp'}else{'HOTD4SP_Recomp'}
-        foreach($candidate in @((Join-Path $near $folder),$library[$game])){
-            if(!$candidate){continue}
-            $entry=if($game -eq 'Normal'){Join-Path (Split-Path $candidate -Parent) 'Play HOTD4.exe'}else{Join-Path $candidate 'Play HOTD4 Special.exe'}
-            if(![IO.File]::Exists($entry)){continue}
-            $b=[Windows.Controls.Button]::new();$b.Content=if($game -eq 'Normal'){'The House of the Dead 4'}else{'The House of the Dead 4 Special'};$b.Tag=$entry;$b.FontSize=17
-            $b.Add_Click({param($sender,$eventArgs)
-                try{$info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=[string]$sender.Tag;$info.WorkingDirectory=Split-Path $info.FileName -Parent;$info.UseShellExecute=$false;$info.CreateNoWindow=$true
-                    foreach($key in @($info.EnvironmentVariables.Keys)){if($key -match '^(HOTD4_|HOTD4SP_|LINDBERGH_|RECOMP_)' -or $key -eq 'TEA_DIR'){$info.EnvironmentVariables.Remove($key)}}
-                    $child=[Diagnostics.Process]::Start($info);$child.Dispose();$window.Close()
-                }catch{[void][Windows.MessageBox]::Show($window,$_.Exception.Message,'Could not open game')}
-            })
-            [void]$ui.OtherGameList.Children.Add($b);$ui.OtherGames.Visibility='Visible';break
-        }
-    }
-    $ui.OtherGames.Add_Click({& $showPage 'OtherPage'});$ui.OtherBack.Add_Click({& $showPage 'MainPage';[void]$ui.OtherGames.Focus()})
-    if($InGame){$ui.OtherGames.Visibility='Collapsed'}
     $window.Add_PreviewKeyDown({param($sender,$eventArgs)
         if($session.Capture){& $captureBinding (ConvertTo-HotdexKey $eventArgs);$eventArgs.Handled=$true;return}
         if($eventArgs.Key -eq 'Escape'){
             foreach($key in 'Resolution','DisplayMode','AntiAliasing','VSync','Filtering','MouseMode','Crosshair'){if($ui[$key].IsDropDownOpen){return}}
-            switch($session.Page){'MainPage'{$window.Close()}'OptionsPage'{& $loadSettings;& $showPage 'MainPage'}'OtherPage'{& $showPage 'MainPage'}default{& $showPage 'OptionsPage'}}
+            switch($session.Page){'MainPage'{$window.Close()}'OptionsPage'{& $loadSettings;& $showPage 'MainPage'}default{& $showPage 'OptionsPage'}}
             $eventArgs.Handled=$true
-        }elseif($eventArgs.Key -in 'Up','Down' -and $session.Page -in 'MainPage','OtherPage'){
+        }elseif($eventArgs.Key -in 'Up','Down' -and $session.Page -eq 'MainPage'){
             $focused=[Windows.Input.Keyboard]::FocusedElement
             if($focused -is [Windows.UIElement]){$direction=if($eventArgs.Key -eq 'Up'){'Previous'}else{'Next'};[void]$focused.MoveFocus([Windows.Input.TraversalRequest]::new([Windows.Input.FocusNavigationDirection]$direction));$eventArgs.Handled=$true}
         }
@@ -221,6 +199,8 @@ function Show-HotdexStartMenu {
     & $loadSettings;& $showPage $(if($InitialPage -eq 'Settings'){'OptionsPage'}else{'MainPage'})
     if(!$InGame){
         . (Join-Path $RecompDir 'hotd-update.ps1')
+        . (Join-Path $RecompDir 'hotd-game-library.ps1')
+        [void](Add-Hotd4GameSwitcher $window $ui.MainPage $RecompDir EX $ui.Play $ui.Options)
         Add-HotdUpdater $window $ui.MainPage $RecompDir EX
     }
     if($Inspect){& $Inspect $window $ui $showPage $saveSettings $loadSettings;if($InGame){return [int]$session.Result};return}
