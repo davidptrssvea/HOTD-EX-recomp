@@ -1,9 +1,6 @@
-# HOTD EX v1.1.5 - Updater progress and cancellation
+# HOTD EX v1.1.6 - Free Play and arcade sound controls
 
-- The launcher shows the current update step and elapsed time. You can Alt+Tab to another app while the update runs.
-- Follow the download, toolchain preparation, and local build. Compilation shows completed and total steps when available, including Arcade Test Menu and OpenXR on supported installations.
-- Choose **Cancel** or close the progress window to stop before installation. Cancelling also stops the build processes.
+- Enable **Free Play (unlimited credits)** in **Settings > Arcade Rules** to start and continue without inserting coins.
+- Enable **Mute Start and coin sounds** to silence the arcade credit cues while keeping music and gameplay audio.
 
-## Updating
-
-Choose **Updates > Download and install** in the launcher. If your current launcher still uses the old update dialog, extract this release ZIP and run **Setup.cmd** to update your existing installation.
+Save your settings and start or restart the game to apply. Update through **Updates > Download and install** or run **Setup.cmd** from the new builder ZIP.

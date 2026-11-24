@@ -25,6 +25,7 @@
 #include "atomic_file.h"
 
 #include "lindbergh_rt.h"
+#include "gameplay_options.h"
 #if !defined(_WIN32)
 #include "host_settings.h"
 #ifndef _WIN32
@@ -868,6 +869,76 @@ static int watch_route(void)
     extern void (*dispatch_lifted(uint32_t va))(CPU *);
     if (!va || !(g_game_loop = dispatch_lifted(va))) return 0;
     return guest_override("_Z8GameLoopP8GAMEWORK", h_game_loop);
+}
+
+
+/* The native credit manager owns both players' credit totals and the cabinet
+ * prompts. Only override its session flag and the two arcade credit cues. */
+static HleHandler original_credit_init, original_credit_config, original_credit_sound, original_credit_text;
+static uint32_t credit_free_play_flag, credit_text_first, credit_text_last, empty_credit_text;
+static uint8_t saved_credit_free_play;
+
+static void h_credit_init(CPU *c)
+{
+    push32(c, rd32(c->esp - 4));
+    original_credit_init(c);
+    saved_credit_free_play = rd8(credit_free_play_flag);
+    wr8(credit_free_play_flag, 1);
+    fprintf(stderr, "[sega] Free Play enabled\n");
+}
+
+static void h_credit_config(CPU *c)
+{
+    uint32_t output = A32(0);
+    push32(c, rd32(c->esp - 4));
+    original_credit_config(c);
+    /* The operator menu must not save the launcher's session override. */
+    if (output && c->eax == 0) wr8(output + 7, saved_credit_free_play);
+}
+
+static void h_credit_sound(CPU *c)
+{
+    push32(c, rd32(c->esp - 4));
+    original_credit_sound(c);
+    if (c->eax == 1 || c->eax == 2) {
+        fprintf(stderr, "[sega] suppressed arcade credit sound %u\n", c->eax);
+        RET(0);
+    }
+}
+
+static void h_credit_text(CPU *c)
+{
+    uint32_t caller = rd32(c->esp - 4);
+    push32(c, caller);
+    original_credit_text(c);
+    /* The HUD treats NULL as Free Play. Only the credit notification code
+     * copies the string without checking it, so supply an empty string there. */
+    if (!c->eax && caller >= credit_text_first && caller <= credit_text_last)
+        RET(empty_credit_text);
+}
+
+void sega_credit_options(uint32_t init, uint32_t config, uint32_t sound, uint32_t free_play_flag,
+                         uint32_t text, uint32_t first, uint32_t last)
+{
+    extern HleHandler dispatch_lifted(uint32_t va);
+    if (gameplay_free_play()) {
+        original_credit_init = dispatch_lifted(init);
+        original_credit_config = dispatch_lifted(config);
+        original_credit_text = dispatch_lifted(text);
+        if (original_credit_init && original_credit_config && original_credit_text) {
+            credit_text_first = first;
+            credit_text_last = last;
+            empty_credit_text = H2G(guest_alloc(1, 1));
+            wr8(empty_credit_text, 0);
+            guest_override_va("arcade free play credit text", text, h_credit_text);
+            credit_free_play_flag = free_play_flag;
+            guest_override_va("arcade free play", init, h_credit_init);
+            guest_override_va("arcade credit configuration", config, h_credit_config);
+        }
+    }
+    if (gameplay_mute_credit_sounds() && (original_credit_sound = dispatch_lifted(sound))) {
+        guest_override_va("arcade credit sounds", sound, h_credit_sound);
+    }
 }
 
 void hle_register_sega(void)

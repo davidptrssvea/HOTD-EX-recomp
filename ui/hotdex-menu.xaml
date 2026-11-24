@@ -161,6 +161,7 @@
     <Button Name="GraphicsOpen" Content="Graphics / Anti-Aliasing..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="MouseOpen" Content="Mouse / Aim..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="DevicesOpen" Content="Lightguns / Sinden..." Height="36" FontSize="16" Margin="0,0,0,7"/><Button Name="BindingsOpen" Content="Key Bindings..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <Button Name="ArcadeOpen" Content="Arcade Rules..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="AudioOpen" Content="Audio..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <TextBlock Name="RestartNotice" Visibility="Collapsed" Text="Resolution, AA and input-device changes apply after Restart Arcade." Foreground="#ADB4C2" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
     <TextBlock Name="SettingsStatus" Foreground="#F07460" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,10"/>
@@ -169,6 +170,13 @@
      <Button Name="SavePlay" Grid.Column="1" Content="Save and Play" Height="42" FontSize="16"/>
     </Grid>
     <Button Name="OptionsBack" Content="Cancel" Height="42" FontSize="16"/>
+   </StackPanel>
+   <StackPanel Name="ArcadePage" Visibility="Collapsed">
+    <TextBlock Text="Arcade Rules" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,20"/>
+    <CheckBox Name="FreePlay" Content="Free Play (unlimited credits)" Foreground="#F0EFEB" FontSize="15" Margin="0,4,0,8" ToolTip="Use Start and Continue without coins. Applies when the game starts."/>
+    <CheckBox Name="MuteCreditSounds" Content="Mute Start and coin sounds" Foreground="#F0EFEB" FontSize="15" Margin="0,0,0,12" ToolTip="Applies when the game starts."/>
+    <TextBlock Text="Save on the Settings page. Changes apply after starting or restarting Arcade." TextWrapping="Wrap" Foreground="#ADB4C2" Margin="0,0,0,12"/>
+    <Button Name="ArcadeBack" Content="Back" Height="44" FontSize="18"/>
    </StackPanel>
    <StackPanel Name="GraphicsPage" Visibility="Collapsed">
     <TextBlock Text="Graphics" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,12"/>

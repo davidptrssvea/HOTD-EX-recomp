@@ -455,7 +455,7 @@ static void cabinet_action(HostAction a, int down)
         return;
     case ACT_MUTE:  if (down) host_audio_toggle_mute(); return;
     case ACT_START1:
-        if (down && g_cab.coins[0] < 2) {
+        if (down && !gameplay_free_play() && g_cab.coins[0] < 2) {
             g_cab.coins[0] += 2;
             fprintf(stderr, "[cab] Auto-inserted 2 coins on Start (total %u)\n", g_cab.coins[0]);
         }

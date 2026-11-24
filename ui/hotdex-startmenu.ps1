@@ -41,7 +41,7 @@ function Show-HotdexStartMenu {
         $brush.Stretch='UniformToFill';$brush.AlignmentX='Left';$ui.Backdrop.Background=$brush
     }
     $session=@{Page='MainPage';Result=0;Capture=$null;Bindings=@{}}
-    $pages='MainPage','OptionsPage','GraphicsPage','MousePage','AudioPage','DevicesPage','BindingsPage'
+    $pages='MainPage','OptionsPage','GraphicsPage','MousePage','AudioPage','ArcadePage','DevicesPage','BindingsPage'
     $context=@{
         OptionsPage=@('MAKE IT YOURS','Choose your render resolution and display mode, then fine-tune graphics, mouse input and audio. Save to keep your changes.')
         GraphicsPage=@('A CLEARER VIEW','The 3D scene renders at your selected resolution. Anti-aliasing smooths edges; anisotropic filtering keeps angled surfaces clearer. V-sync applies after restarting Arcade. Original artwork retains its original detail.')
@@ -119,7 +119,12 @@ function Show-HotdexStartMenu {
         $raw=$ui.MouseMode.SelectedItem -and $ui.MouseMode.SelectedItem.Tag -eq '1'
         $ui.MouseGrab.IsEnabled=!$raw;if($raw){$ui.MouseGrab.IsChecked=$true}
     }
+    $arcadeProfiles=[ordered]@{FreePlay='arcade-free-play.txt';MuteCreditSounds='arcade-mute-credit-sounds.txt'}
     $loadSettings={
+        foreach($name in $arcadeProfiles.Keys){
+            $path=Join-Path $RecompDir $arcadeProfiles[$name]
+            $ui[$name].IsChecked=[IO.File]::Exists($path) -and [IO.File]::ReadAllText($path).Trim() -eq '1'
+        }
         $s=Read-HotdexSettings $ini;$tag="$($s.width)x$($s.height)"
         $ui.Resolution.SelectedIndex=-1;& $selectOption $ui.Resolution $tag
         if($ui.Resolution.SelectedIndex -lt 0){$ui.Resolution.Text="$($s.width) x $($s.height)"}
@@ -145,6 +150,9 @@ function Show-HotdexStartMenu {
             foreach($row in $script:HotdexControlRows | Select-Object -First 11){$code=$session.Bindings[$row[0]];$v[$row[0]]=if($code -lt 0){'mouse'+(-$code)}else{$code}}
             $v.raw_mouse=[int]([int]$ui.InputMode.SelectedItem.Tag -eq 1)
             Write-HotdexInputPreferences $RecompDir @{Mode=$ui.InputMode.SelectedItem.Tag;Gun1=$ui.Gun1.SelectedItem.Tag;Gun2=$ui.Gun2.SelectedItem.Tag;Border=[int][bool]$ui.Sinden.IsChecked;Width=$ui.BorderWidth.SelectedItem.Tag;AA=$v.aa;VSync=$ui.VSync.SelectedItem.Tag;Offscreen=$v.leave_reload;Speed=$v.mouse_sens} $session.Bindings
+            foreach($name in $arcadeProfiles.Keys){
+                [IO.File]::WriteAllText((Join-Path $RecompDir $arcadeProfiles[$name]),[string][int][bool]$ui[$name].IsChecked)
+            }
             Write-HotdexSettings $ini $v;$ui.SettingsStatus.Text='';return $true
         }catch{$ui.SettingsStatus.Text=$_.Exception.Message;return $false}
     }
@@ -175,6 +183,8 @@ function Show-HotdexStartMenu {
     }
     $ui.Play.Add_Click({& $startGame});$ui.Quit.Add_Click({if($InGame){$session.Result=77};$window.Close()})
     $ui.Options.Add_Click({& $loadSettings;& $showPage 'OptionsPage';[void]$ui.Resolution.Focus()})
+    $ui.ArcadeOpen.Add_Click({& $showPage 'ArcadePage';[void]$ui.FreePlay.Focus()})
+    $ui.ArcadeBack.Add_Click({& $showPage 'OptionsPage';[void]$ui.ArcadeOpen.Focus()})
     $ui.GraphicsOpen.Add_Click({& $showPage 'GraphicsPage';[void]$ui.AntiAliasing.Focus()})
     $ui.MouseOpen.Add_Click({& $showPage 'MousePage';[void]$ui.MouseMode.Focus()})
     $ui.AudioOpen.Add_Click({& $showPage 'AudioPage';[void]$ui.AudioEnabled.Focus()})

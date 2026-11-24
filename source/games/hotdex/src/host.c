@@ -110,6 +110,9 @@ static unsigned ex_operator_button(unsigned buttons)
     held=down;return buttons&~CAB_TEST;
 }
 
+void sega_credit_options(uint32_t init, uint32_t config, uint32_t sound, uint32_t free_play_flag,
+                         uint32_t text, uint32_t first, uint32_t last);
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
@@ -129,6 +132,8 @@ int main(int argc, char **argv)
     hle_register_all();
     host_cabinet_button_filter(ex_operator_button);
     gameplay_options_load();
+    sega_credit_options(0x084b572eu, 0x084b68acu, 0x084b6677u, 0x0aa3dd67u,
+                        0x084b6767u, 0x080592e5u, 0x08059355u);
     install_media_skip();
 #if defined(_WIN64) && !defined(LINDBERGH_OPENXR) && !defined(LINDBERGH_VULKAN)
     install_desktop_layout();

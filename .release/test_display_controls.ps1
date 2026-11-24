@@ -25,6 +25,9 @@ foreach($edition in @($edition)){
   if(!(Test-Path -LiteralPath (Join-Path $uiSource $required.Name) -PathType Leaf)){throw "Incomplete launcher installation: $($required.Name) is missing from $uiSource"}
  }
  foreach($p in Get-ChildItem -LiteralPath $uiSource -File){Copy-Item -LiteralPath $p.FullName -Destination $fixture -Force}
+ foreach($name in 'arcade-free-play.txt','arcade-mute-credit-sounds.txt'){
+  [IO.File]::Delete((Join-Path $fixture $name))
+ }
  $ini=Join-Path $fixture 'lindbergh.ini'
  if(!(Test-Path -LiteralPath $ini)){[IO.File]::WriteAllText($ini,"width = 1280"+[Environment]::NewLine+"height = 720"+[Environment]::NewLine+"fullscreen = 0"+[Environment]::NewLine)}
  $pref=Join-Path $fixture 'vsync-profile.txt'
@@ -43,6 +46,20 @@ foreach($edition in @($edition)){
   param($w,$ui,$show)
   $w.Topmost=$false;$w.ShowActivated=$false;$w.Left=-20000;$w.Top=-20000;$w.Width=1280;$w.Height=720
   $w.Show();$w.UpdateLayout()
+  if($edition -eq 'EX'){Click $ui.Options;Click $ui.ArcadeOpen}
+  else{& $show 'OptionsPage';Click $ui.GameplayOpen}
+  $w.UpdateLayout()
+  if(!$ui.FreePlay.IsVisible -or !$ui.MuteCreditSounds.IsVisible){throw "$edition arcade options are missing"}
+  foreach($name in 'FreePlay','MuteCreditSounds'){
+   if([int][bool]$ui[$name].IsChecked -ne [int]$script:Expected){throw "$edition $name did not load $script:Expected"}
+   $ui[$name].IsChecked=$script:Choose -eq '1'
+  }
+  if($edition -eq 'EX'){Click $ui.ArcadeBack;Click $ui.Save}
+  else{Click $ui.SaveGameplay}
+  foreach($name in 'arcade-free-play.txt','arcade-mute-credit-sounds.txt'){
+   if([IO.File]::ReadAllText((Join-Path $fixture $name)) -ne $script:Choose){throw "$edition did not save $name"}
+  }
+
   & $show $(if($edition -eq 'EX'){'GraphicsPage'}else{'InputPage'})
   $w.UpdateLayout()
   if(!$w.FindName('Updates')){

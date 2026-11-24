@@ -1,6 +1,8 @@
 #pragma once
 #include "cabinet_buttons.h"
 void gameplay_options_load(void);
+int gameplay_free_play(void);
+int gameplay_mute_credit_sounds(void);
 void gameplay_options_set(int offscreen, int blood);
 void gameplay_options_save(void);
 int gameplay_offscreen_reload(void);
