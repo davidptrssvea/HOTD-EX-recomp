@@ -3,6 +3,9 @@
 #include "atomic_file.h"
 #include <stdlib.h>
 #include <stdatomic.h>
+#ifdef _WIN32
+#include <wchar.h>
+#endif
 static atomic_int offscreen_reload=1,blood_splatter=0;
 static int free_play, mute_credit_sounds, arcade_options_loaded;
 static void path_for(char *path,size_t size,const char *name)
@@ -26,9 +29,29 @@ int gameplay_offscreen_reload(void){return atomic_load(&offscreen_reload);}
 int gameplay_blood_splatter(void){return atomic_load(&blood_splatter);}
 static int read_arcade_toggle(const char *name)
 {
+#ifdef _WIN32
+    wchar_t path[32768];
+    const size_t capacity = sizeof path / sizeof path[0];
+    const wchar_t *dir = _wgetenv(L"HOTD4_SETTINGS_DIR");
+    size_t used = 0;
+    if (dir && *dir) {
+        used = wcslen(dir);
+        if (used >= capacity - 1) return 0;
+        wmemcpy(path, dir, used);
+        if (path[used - 1] != L'\\' && path[used - 1] != L'/') path[used++] = L'\\';
+    } else {
+        const DWORD copied = GetModuleFileNameW(NULL, path, (DWORD)capacity);
+        if (copied >= capacity) return 0;
+        const wchar_t *slash = copied ? wcsrchr(path, L'\\') : NULL;
+        used = slash ? (size_t)(slash - path) + 1 : 0;
+    }
+    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path + used, (int)(capacity - used))) return 0;
+    FILE *f = _wfopen(path, L"rb");
+#else
     char path[2048];
     path_for(path,sizeof path,name);
     FILE *f=fopen(path,"rb");
+#endif
     if (!f) return 0;
     int value=fgetc(f);
     fclose(f);

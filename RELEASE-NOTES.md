@@ -1,6 +1,7 @@
-# HOTD EX v1.1.6 - Free Play and arcade sound controls
+# HOTD EX v1.1.7 - Updater and launcher fixes
 
-- Enable **Free Play (unlimited credits)** in **Settings > Arcade Rules** to start and continue without inserting coins.
-- Enable **Mute Start and coin sounds** to silence the arcade credit cues while keeping music and gameplay audio.
+- Retry temporary Windows file replacement errors during updates. If the error persists, the updater attempts to restore any files it already replaced and records the affected path and Windows error code in `update-error.log`.
+- Show the installed builder version directly in the main menu.
+- Fix **Free Play (unlimited credits)** and **Mute Start and coin sounds** when the Windows settings path contains non-ASCII characters.
 
-Save your settings and start or restart the game to apply. Update through **Updates > Download and install** or run **Setup.cmd** from the new builder ZIP.
+Use **Updates > Download and install** from a working launcher. If the previous updater failed, close the launcher and game, extract this release's ZIP into a separate folder, and run `Setup.cmd -InstallDir "D:\Games\HOTDEX-PC"` with your existing installation path. Select the same arcade dump to keep your settings and saves.

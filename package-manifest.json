@@ -28,7 +28,7 @@
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "b946ace317d4dbc337aa047902aaf2b2b5f98a974b3092e11dc1205dd7c69a85"
+      "sha256": "9b931a10cac22474f4b4efb271943eeb1f639ba6f6aab2a0b135f91cc290a551"
     },
     {
       "path": "Setup.cmd",
@@ -552,7 +552,7 @@
     },
     {
       "path": "source/lindberghrecomp/src/runtime/gameplay_options.c",
-      "sha256": "a5ced13b1c1ced86f4f1216e9ddae5b19954b1d91fa945638a3e83f8a57c79d3"
+      "sha256": "1c403f814bdb365f005da0d02b80e430d6803f823887df39bfc2b0935fbbeccc"
     },
     {
       "path": "source/lindberghrecomp/src/runtime/gameplay_options.h",
@@ -1060,7 +1060,7 @@
     },
     {
       "path": "ui/hotd-update-version.txt",
-      "sha256": "94fa43e04447d990576c6be046c92431bab330b778bf39670e33c04c62ad2e0b"
+      "sha256": "476f8ebbbb01951f293c84a6a26a10b2d9cb7220d8558bc1f1156e68a7b61912"
     },
     {
       "path": "ui/hotd-game-library.ps1",
@@ -1068,7 +1068,7 @@
     },
     {
       "path": "ui/hotd-update.ps1",
-      "sha256": "55c85f910b857420223e9c0aba73ec4b9cb1dae4cc101c3b3fc2bca8bfea9cc2"
+      "sha256": "fe36782e9e51fb789d833b7a70aa9e35c3485cb722218a303e0d5103cf82cf81"
     },
     {
       "path": "ui/hotdex-config.ps1",
@@ -1084,7 +1084,7 @@
     },
     {
       "path": "ui/hotdex-menu.xaml",
-      "sha256": "bcd1c69d44d20f8a29d76759d39d0c52acc67f346de34a98be6228db0e883134"
+      "sha256": "dd5671e093a715dccf9f867e3635738de7dd8620ec162a4806b990c60e3d34c7"
     },
     {
       "path": "ui/hotdex-startmenu.ps1",

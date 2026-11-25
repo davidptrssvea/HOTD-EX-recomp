@@ -232,6 +232,8 @@
     <Button Name="BindingsBack" Content="Back" Height="40" FontSize="17"/>
    </StackPanel>
   </StackPanel>
+  <TextBlock Name="InstalledVersion" FontSize="15" Foreground="#D0C7C2" HorizontalAlignment="Left"
+             VerticalAlignment="Bottom" Margin="74,0,0,26" Visibility="Collapsed"/>
  </Grid></Viewbox>
  <Border Name="TrackingBorder" BorderBrush="White" BorderThickness="0" Visibility="Collapsed" IsHitTestVisible="False"><Border Name="TrackingOutline" BorderBrush="Black" BorderThickness="0"/></Border>
 </Grid></Window>
