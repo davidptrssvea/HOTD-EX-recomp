@@ -24,11 +24,11 @@
     },
     {
       "path": "README.md",
-      "sha256": "4f0e031da44269d3a3e81cdf5edb5509e45fb1bf94094859a5c8dd75ea162ac1"
+      "sha256": "c404f0a8ffa01ae1ac71ef0b09611df735185ff8488e8680f212a50e48add22e"
     },
     {
       "path": "RELEASE-NOTES.md",
-      "sha256": "9b931a10cac22474f4b4efb271943eeb1f639ba6f6aab2a0b135f91cc290a551"
+      "sha256": "8cddecb442c3cabb34a6db6072b43e0ff62f415aa058c86c0e23ad5b83aa5f2d"
     },
     {
       "path": "Setup.cmd",
@@ -676,7 +676,7 @@
     },
     {
       "path": "source/lindberghrecomp/src/runtime/host_sdl.c",
-      "sha256": "0948af9877f87e7754a4f59811176a208b97e1e8bee234ea0f4e6b5183560282"
+      "sha256": "0b703d0e2ae86cc2c58e3d929682a1aaa1a14faf71cb18677621c5f18bf641d7"
     },
     {
       "path": "source/lindberghrecomp/src/runtime/host_settings.c",
@@ -704,7 +704,7 @@
     },
     {
       "path": "source/lindberghrecomp/src/runtime/hotdex_pause.h",
-      "sha256": "74c491ccb17e61da5d7b5594cd23c20ca337bef7d070958ab44227fab134b94f"
+      "sha256": "d5d813b5a7b512aba75b9ddbf204611e95cc4e8c746f7f923d81ec54de36efd0"
     },
     {
       "path": "source/lindberghrecomp/src/runtime/hud_widen.c",
@@ -712,7 +712,7 @@
     },
     {
       "path": "source/lindberghrecomp/src/runtime/input_options.h",
-      "sha256": "6b0bceade9ce6820237e46cd51979a826baf4a1a8860cb09079caf254c276fed"
+      "sha256": "7a48a60d251141b087b03cc21cdbdfbc2190cdaedd0cf0028bae4acff67841e3"
     },
     {
       "path": "source/lindberghrecomp/src/runtime/lindbergh_rt.h",
@@ -1056,15 +1056,15 @@
     },
     {
       "path": "ui/config_menu.ps1",
-      "sha256": "d26afb8a4bb640f0678b46707ba2ddbf00c498fe2802c0fab8d7189b0323d74a"
+      "sha256": "109fc5779919545fcd4abaf5f10a31a9452adffbff7b19eea2f67f5eb5307adb"
     },
     {
       "path": "ui/hotd-update-version.txt",
-      "sha256": "476f8ebbbb01951f293c84a6a26a10b2d9cb7220d8558bc1f1156e68a7b61912"
+      "sha256": "c982f9de633e527ed41044f1fe7e24f7a00df4923b223f100054dd0106cc95d6"
     },
     {
       "path": "ui/hotd-game-library.ps1",
-      "sha256": "f155a81cc7c465d5bf90b72b38642c94d936edde1eb01ab51f2c1761f6c22f31"
+      "sha256": "752eb02a1aa941c0282d70c4dbe6ce1a1526a60c349d8f0c0b132777df2cfab2"
     },
     {
       "path": "ui/hotd-update.ps1",
@@ -1076,7 +1076,7 @@
     },
     {
       "path": "ui/hotdex-input.ps1",
-      "sha256": "40d97e3877c4f5dac4df86b2a6893c72160656677f482194d7dcdfff91a2e513"
+      "sha256": "f81156fddfd396a98339ebf469ba1cbbfb7847e0a135d92a1806c6d960fc9849"
     },
     {
       "path": "ui/hotdex-launcher.ps1",
@@ -1084,11 +1084,11 @@
     },
     {
       "path": "ui/hotdex-menu.xaml",
-      "sha256": "dd5671e093a715dccf9f867e3635738de7dd8620ec162a4806b990c60e3d34c7"
+      "sha256": "c7bdefb8de9324741234d745522a635d27231c09122628955435648ad34b8fac"
     },
     {
       "path": "ui/hotdex-startmenu.ps1",
-      "sha256": "babfce249ec80f39de60ffcf32f82a833a71937f60260a7a2f847066a1ef28dc"
+      "sha256": "43e36a743d7c9208ea79e2714686c69688b9c721ad2e704ce120e0a48987da0d"
     },
     {
       "path": "ui/lindbergh.ini",

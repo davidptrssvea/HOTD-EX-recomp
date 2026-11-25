@@ -23,7 +23,7 @@ function Get-HotdexControlSummary([string]$Path) {
  return "P1  Coin: $(Get-HotdexKeyName $b.coin1)   Start: $(Get-HotdexKeyName $b.start1)    |    P2  Coin: $(Get-HotdexKeyName $b.coin2)   Start: $(Get-HotdexKeyName $b.start2)`nShoot: $(Get-HotdexKeyName $b.trigger)     Reload: $(Get-HotdexKeyName $b.reload)`nPedal P1: $(Get-HotdexKeyName $b.action)     Pedal P2: $(Get-HotdexKeyName $b.action2)`nPause: $(Get-HotdexKeyName $b.pause)     Test: $(Get-HotdexKeyName $b.test)     Service: $(Get-HotdexKeyName $b.service)"
 }
 function Show-HotdexStartMenu {
-    param([Parameter(Mandatory)][string]$RecompDir,[ValidateSet('Main','Settings')][string]$InitialPage='Main',[scriptblock]$Inspect,[switch]$InGame,[long]$GameWindow=0)
+    param([Parameter(Mandatory)][string]$RecompDir,[ValidateSet('Main','Settings')][string]$InitialPage='Main',[scriptblock]$Inspect,[switch]$InGame,[long]$GameWindow=0,[string]$PauseFrame)
     Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
     . (Join-Path $RecompDir 'hotdex-config.ps1')
     . (Join-Path $RecompDir 'hotdex-input.ps1')
@@ -47,7 +47,7 @@ function Show-HotdexStartMenu {
         GraphicsPage=@('A CLEARER VIEW','The 3D scene renders at your selected resolution. Anti-aliasing smooths edges; anisotropic filtering keeps angled surfaces clearer. V-sync applies after restarting Arcade. Original artwork retains its original detail.')
         MousePage=@('AIM YOUR WAY','Raw Relative uses mouse movement without Windows pointer acceleration and locks the pointer. F1 releases it. The extra mouse crosshair is separate from the game''s own aiming indicators.')
         AudioPage=@('SET THE VOLUME','Enable or mute the game and choose your master volume. Your selection is used by both launch shortcuts.')
-        DevicesPage=@('TWO PLAYERS, TWO DEVICES','For two lightguns, select Lightgun (Raw Input) and assign a different device to each player. Auto chooses distinct absolute guns. For a gun and a Windows/Parsec mouse, choose the mixed co-op mode; the mouse controls P2. Use Space / Right Ctrl for the two pedals by default.')
+        DevicesPage=@('TWO PLAYERS, TWO DEVICES','Gamepad mode assigns the first two connected controllers automatically. For lightguns, choose Raw Input and assign a separate device to each player. In mixed co-op, the mouse controls P2. Use Space or Right Ctrl for the pedals with a keyboard.')
         BindingsPage=@('YOUR CABINET, YOUR CONTROLS','Click a binding, then press a key or mouse button. Esc cancels capture. Duplicate assignments are rejected. Mouse bindings are available for shoot, reload and pedal. Save your changes on the Settings page.')
     }
     $showPage={param([string]$Page)
@@ -70,7 +70,7 @@ function Show-HotdexStartMenu {
     foreach($n in 1,2,4,8,16){& $addOption $ui.Filtering ([string]$n) $(if($n -eq 1){'Off'}else{"AF ${n}x"})}
     foreach($pair in @(@('0','Desktop Cursor'),@('1','Raw Relative'))){& $addOption $ui.MouseMode $pair[0] $pair[1]}
     foreach($pair in @(@('1','Show'),@('0','Hide'))){& $addOption $ui.Crosshair $pair[0] $pair[1]}
-    foreach($pair in @(@('0','Mouse (Absolute)'),@('1','Mouse (Raw Relative)'),@('2','Lightguns (Raw Input)'),@('3','Co-op: Gun P1 + Mouse P2'),@('4','Co-op: Gun P1 + Mouse P2 (Relative)'))){& $addOption $ui.InputMode $pair[0] $pair[1]}
+    foreach($pair in @(@('0','Mouse (Absolute)'),@('1','Mouse (Raw Relative)'),@('2','Lightguns (Raw Input)'),@('3','Co-op: Gun P1 + Mouse P2'),@('4','Co-op: Gun P1 + Mouse P2 (Relative)'),@('5','Gamepad (P1 + P2)'))){& $addOption $ui.InputMode $pair[0] $pair[1]}
     foreach($pair in @(@('25','Extra Thin (0.75%)'),@('50','Thin (1.5%, default)'),@('75','Medium (2.25%)'),@('100','Original (3%)'))){& $addOption $ui.BorderWidth $pair[0] $pair[1]}
     $selectOption={param($Combo,$Value)foreach($item in $Combo.Items){if([string]$item.Tag -eq [string]$Value){$Combo.SelectedItem=$item;return}}}
     $bindingButtons=@{}
@@ -93,7 +93,8 @@ function Show-HotdexStartMenu {
     }
     $updateDevices={
       $mode=if($ui.InputMode.SelectedItem){[int]$ui.InputMode.SelectedItem.Tag}else{0}
-      $ui.Gun1.IsEnabled=$mode -ge 2;$ui.Gun2.IsEnabled=$mode -eq 2
+      $ui.Gun1.IsEnabled=$mode -in 2,3,4;$ui.Gun2.IsEnabled=$mode -eq 2
+      $ui.GamepadGuide.Visibility=if($mode -eq 5){'Visible'}else{'Collapsed'}
       $ui.MouseMode.IsEnabled=$mode -lt 2
       if($updateGrab){& $updateGrab}
       if($mode -lt 2){$session.SyncMode=$true;$ui.MouseMode.SelectedIndex=$mode;$session.SyncMode=$false}
@@ -178,7 +179,26 @@ function Show-HotdexStartMenu {
     $ui.TestMenu.IsEnabled=[IO.File]::Exists((Join-Path $RecompDir 'hotdex-testmenu.exe')) -and [IO.File]::Exists((Join-Path $operatorDump 'elf/hodextestR.elf'))
     $ui.TestMenu.ToolTip=if($ui.TestMenu.IsEnabled){'Ends the current game and opens the arcade operator settings. Service selects; Test confirms.'}else{'Requires the supported hodextestR.elf from your dump. Rerun Setup with that file present.'}
     [Windows.Controls.ToolTipService]::SetShowOnDisabled($ui.TestMenu,$true)
-    if($InGame){$window.AllowsTransparency=$true;$window.Background=[Windows.Media.Brushes]::Transparent;$ui.Backdrop.Background=$null;$ui.Play.Content='Resume';$ui.RestartArcade.Visibility='Visible';$ui.ReturnMain.Visibility='Visible';$ui.RestartNotice.Visibility='Visible';$ui.SavePlay.Visibility='Collapsed';$ui.CollectionCaption.Text='PAUSED';$ui.ControlFooter.Text='The game clock and audio are paused. Save, then Resume or Restart Arcade.'
+    if($InGame){
+      $window.ShowInTaskbar=$false
+      if($PauseFrame -and [IO.File]::Exists($PauseFrame)){
+        $stream=$null
+        try{
+          $stream=[IO.File]::OpenRead($PauseFrame)
+          $frame=[Windows.Media.Imaging.BitmapImage]::new()
+          $frame.BeginInit()
+          $frame.CacheOption=[Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+          $frame.StreamSource=$stream
+          $frame.EndInit()
+          $frame.Freeze()
+          $ui.Backdrop.Background=[Windows.Media.ImageBrush]::new($frame)
+        }catch{
+          Write-Verbose "Could not load the paused game frame: $($_.Exception.Message)"
+        }finally{
+          if($stream){$stream.Dispose()}
+        }
+      }
+      $ui.Play.Content='Resume';$ui.RestartArcade.Visibility='Visible';$ui.ReturnMain.Visibility='Visible';$ui.RestartNotice.Visibility='Visible';$ui.SavePlay.Visibility='Collapsed';$ui.CollectionCaption.Text='PAUSED';$ui.ControlFooter.Text='The game clock and audio are paused. Save, then Resume or Restart Arcade.'
       if($GameWindow){$bounds=[HotdexPlatform]::Bounds([intptr]$GameWindow);if($bounds){$window.Left=$bounds[0];$window.Top=$bounds[1];$window.Width=$bounds[2];$window.Height=$bounds[3]};$owner=[Windows.Interop.WindowInteropHelper]::new($window);$owner.Owner=[intptr]$GameWindow}
     }
     $ui.Play.Add_Click({& $startGame});$ui.Quit.Add_Click({if($InGame){$session.Result=77};$window.Close()})
@@ -199,7 +219,7 @@ function Show-HotdexStartMenu {
         if($session.Capture){& $captureBinding (ConvertTo-HotdexKey $eventArgs);$eventArgs.Handled=$true;return}
         if($eventArgs.Key -eq 'Escape'){
             foreach($key in 'Resolution','DisplayMode','AntiAliasing','VSync','Filtering','MouseMode','Crosshair'){if($ui[$key].IsDropDownOpen){return}}
-            switch($session.Page){'MainPage'{$window.Close()}'OptionsPage'{& $loadSettings;& $showPage 'MainPage'}default{& $showPage 'OptionsPage'}}
+            switch($session.Page){'MainPage'{$window.Close()}'OptionsPage'{& $loadSettings;& $showPage 'MainPage';[void]$ui.Options.Focus()}default{& $showPage 'OptionsPage'}}
             $eventArgs.Handled=$true
         }elseif($eventArgs.Key -in 'Up','Down' -and $session.Page -eq 'MainPage'){
             $focused=[Windows.Input.Keyboard]::FocusedElement
@@ -214,7 +234,8 @@ function Show-HotdexStartMenu {
         Add-HotdUpdater $window $ui.MainPage $RecompDir EX
     }
     if($Inspect){& $Inspect $window $ui $showPage $saveSettings $loadSettings;if($InGame){return [int]$session.Result};return}
-    $window.Add_ContentRendered({if($session.Page -eq 'MainPage'){[void]$ui.Play.Focus()}else{[void]$ui.Resolution.Focus()}})
+    $focusFirstControl={if($session.Page -eq 'MainPage'){[void]$ui.Play.Focus()}else{[void]$ui.Resolution.Focus()}}
+    if($InGame){$window.Add_Loaded($focusFirstControl)}else{$window.Add_ContentRendered($focusFirstControl)}
     [void]$window.ShowDialog()
     if($InGame){return [int]$session.Result}
 }

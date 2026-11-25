@@ -81,6 +81,16 @@ foreach($edition in @($edition)){
   if($edition -eq 'EX'){Click $ui.GraphicsBack;Click $ui.Save}else{Click $ui.SaveInput}
   if([IO.File]::ReadAllText($pref).Trim() -ne $script:Choose){throw "$edition V-sync did not save $script:Choose"}
   if($edition -ne 'EX' -and [IO.File]::ReadAllText($aspectPref).Trim() -ne $(if($script:Choose -eq '1'){'4:3'}else{'16:9'})){throw "$edition aspect did not save"}
+  & $show $(if($edition -eq 'EX'){'DevicesPage'}else{'InputPage'})
+  $gamepadTag=if($edition -eq 'EX'){'5'}else{'6'}
+  $gamepad=@($ui.InputMode.Items | Where-Object Tag -eq $gamepadTag)
+  if($gamepad.Count -ne 1 -or $gamepad[0].Content -notlike 'Gamepad*'){throw "$edition gamepad mode is missing"}
+  $ui.InputMode.SelectedItem=$gamepad[0]
+  if($ui.Gun1.IsEnabled -or $ui.Gun2.IsEnabled){throw "$edition gamepad mode exposed raw gun assignment"}
+  if($edition -eq 'EX'){Click $ui.DevicesBack;Click $ui.Save}else{Click $ui.SaveInput}
+  if([IO.File]::ReadAllText((Join-Path $fixture 'input-profile.txt')).Trim() -ne $gamepadTag){
+   throw "$edition did not save the gamepad input profile"
+  }
   $w.Close()
  }
  for($pass=0;$pass -lt 2;$pass++){

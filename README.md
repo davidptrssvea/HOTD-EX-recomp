@@ -1,5 +1,9 @@
 # The House of the Dead EX Windows Local Builder
 
+## Gamepad
+
+Choose **Gamepad (P1 + P2)** in **Settings → Input Devices** and save. The first controller is assigned to P1 and the second to P2. Either stick aims. **RT / A** shoots, **X / LB** reloads, **LT / B** presses the pedal and **Menu / Start** joins. Click the left stick to insert a credit. **View / Back** opens the pause menu, where the D-pad navigates and **A** selects.
+
 Build the Windows desktop port on your own PC using your own extracted arcade dump. This package contains source, scripts and launcher UI only. It contains no arcade executable, generated game code, game assets, screenshots, movies, audio, textures, cabinet save or prebuilt game executable.
 
 **v1.1.2:** adds saved desktop V-Sync Off/On under Settings > Graphics. Includes the launcher updater, remembered Setup folders, pause menu, control/lightgun settings and optional arcade Test Menu.

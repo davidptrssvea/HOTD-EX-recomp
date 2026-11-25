@@ -1,9 +1,9 @@
 [CmdletBinding()]
-param([ValidateSet('Main','Settings')][string]$Page='Main',[switch]$InGame,[long]$GameWindow=0)
+param([ValidateSet('Main','Settings')][string]$Page='Main',[switch]$InGame,[long]$GameWindow=0,[string]$PauseFrame)
 $ErrorActionPreference='Stop'
 try {
     . (Join-Path $PSScriptRoot 'hotdex-startmenu.ps1')
-    $result=Show-HotdexStartMenu -RecompDir $PSScriptRoot -InitialPage $Page -InGame:$InGame -GameWindow $GameWindow
+    $result=Show-HotdexStartMenu -RecompDir $PSScriptRoot -InitialPage $Page -InGame:$InGame -GameWindow $GameWindow -PauseFrame $PauseFrame
     if($InGame){exit ([int]$result)}
 } catch {
     Add-Type -AssemblyName PresentationFramework

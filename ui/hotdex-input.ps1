@@ -41,7 +41,7 @@ function Write-HotdexText([string]$Path,[string]$Value){
 function Get-HotdexInputPreferences([string]$Dir,$Settings){
  $v=@{Mode=[int]$Settings.raw_mouse;Gun1='auto';Gun2='disabled';Border=0;Width=50;VSync=0}
  foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'),@('VSync','vsync-profile.txt'))){$p=Join-Path $Dir $entry[1];if([IO.File]::Exists($p)){$v[$entry[0]]=[IO.File]::ReadAllText($p).Trim()}}
- if([string]$v.VSync -notmatch '^[01]$'){$v.VSync=0};if([string]$v.Mode -notmatch '^[0-4]$'){$v.Mode=0};if($v.Width -notin 25,50,75,100){$v.Width=50};return $v
+ if([string]$v.VSync -notmatch '^[01]$'){$v.VSync=0};if([string]$v.Mode -notmatch '^[0-5]$'){$v.Mode=0};if($v.Width -notin 25,50,75,100){$v.Width=50};return $v
 }
 function Write-HotdexInputPreferences([string]$Dir,$Values,$Bindings){
  foreach($entry in @(@('Mode','input-profile.txt'),@('Gun1','raw-gun1.txt'),@('Gun2','raw-gun2.txt'),@('Border','sinden-profile.txt'),@('Width','sinden-width.txt'),@('VSync','vsync-profile.txt'),@('AA','aa-profile.txt'),@('Offscreen','offscreen-reload.txt'))){Write-HotdexText (Join-Path $Dir $entry[1]) ([string]$Values[$entry[0]])}

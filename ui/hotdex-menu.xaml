@@ -160,7 +160,7 @@
     </Grid>
     <Button Name="GraphicsOpen" Content="Graphics / Anti-Aliasing..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="MouseOpen" Content="Mouse / Aim..." Height="36" FontSize="16" Margin="0,0,0,7"/>
-    <Button Name="DevicesOpen" Content="Lightguns / Sinden..." Height="36" FontSize="16" Margin="0,0,0,7"/><Button Name="BindingsOpen" Content="Key Bindings..." Height="36" FontSize="16" Margin="0,0,0,7"/>
+    <Button Name="DevicesOpen" Content="Input Devices..." Height="36" FontSize="16" Margin="0,0,0,7"/><Button Name="BindingsOpen" Content="Key Bindings..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="ArcadeOpen" Content="Arcade Rules..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <Button Name="AudioOpen" Content="Audio..." Height="36" FontSize="16" Margin="0,0,0,7"/>
     <TextBlock Name="RestartNotice" Visibility="Collapsed" Text="Resolution, AA and input-device changes apply after Restart Arcade." Foreground="#ADB4C2" TextWrapping="Wrap" FontSize="13" Margin="0,0,0,8"/>
@@ -212,9 +212,10 @@
     <Button Name="AudioBack" Content="Back" Height="44" FontSize="18"/>
    </StackPanel>
    <StackPanel Name="DevicesPage" Visibility="Collapsed">
-    <TextBlock Text="Lightguns / Sinden" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
+    <TextBlock Text="Input Devices" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,10"/>
     <Label Content="Input Mode" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
     <ComboBox Name="InputMode" Height="34" Margin="0,4,0,10"/>
+    <TextBlock Name="GamepadGuide" Visibility="Collapsed" Text="Either stick aims. RT / A shoots, X / LB reloads, LT / B presses the pedal, and Menu starts. Click the left stick for a credit. View pauses." TextWrapping="Wrap" Margin="0,0,0,8"/>
     <Label Content="Player 1 Device" Foreground="#F0EFEB" FontSize="15" Padding="0"/>
     <ComboBox Name="Gun1" Height="34" Margin="0,4,0,10"/>
     <Label Content="Player 2 Device" Foreground="#F0EFEB" FontSize="15" Padding="0"/>

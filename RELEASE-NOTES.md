@@ -1,7 +1,10 @@
-# HOTD EX v1.1.7 - Updater and launcher fixes
+# HOTD EX v1.1.8 – Gamepad support
 
-- Retry temporary Windows file replacement errors during updates. If the error persists, the updater attempts to restore any files it already replaced and records the affected path and Windows error code in `update-error.log`.
-- Show the installed builder version directly in the main menu.
-- Fix **Free Play (unlimited credits)** and **Mute Start and coin sounds** when the Windows settings path contains non-ASCII characters.
+- Added two-player gamepad support to Windows desktop play. Either stick aims, RT or A shoots, X or LB reloads, and LT or B operates the pedal.
+- Press View or Back to pause. Use the D-pad to navigate and A to select. The system mouse pointer is hidden during gamepad play.
+- Fixed the black pause screen. The menu now displays the frozen gameplay frame, including in fullscreen with MSAA, and Resume continues the current game.
+- Updated Game Library with installed versions, display and input summaries, per-game release checks, and a mouse and lightgun input test.
 
-Use **Updates > Download and install** from a working launcher. If the previous updater failed, close the launcher and game, extract this release's ZIP into a separate folder, and run `Setup.cmd -InstallDir "D:\Games\HOTDEX-PC"` with your existing installation path. Select the same arcade dump to keep your settings and saves.
+Enable **Gamepad (P1 + P2)** under **Settings > Input Devices** and save. Press **Menu / Start** to join.
+
+Update from **Updates > Download and install**. For a manual update, extract the Local Builder ZIP, run `Setup.cmd`, and select your existing installation and game files.

@@ -304,6 +304,7 @@ int host_hotd4_start_binding(void){return hc_get(ACT_START1);}
 #else
 #define hotdex_extra_input(bind,down) 0
 #define input_active_mode 0
+#define input_gamepad_active 0
 #define raw_held 0u
 #define remote_held 0u
 #endif
@@ -318,7 +319,7 @@ int host_mouse_shake(int active)
 {
     pthread_mutex_lock(&g_mouse_shake_mutex);
     int pulse;
-    if (input_active_mode >= 2) {
+    if (input_active_mode >= 2 || input_gamepad_active) {
         g_mouse_shake_active = 0;
         mouse_shake_reset(&g_mouse_shake);
         pulse = -1;
@@ -363,9 +364,71 @@ static const unsigned CAB_OF[ACT_COUNT] = {
 static SDL_GameController *g_pad[2];
 static unsigned g_pad_held;   /* both pads, as cabinet bits */
 
+#ifdef HOTD4_DESKTOP_PAUSE
+static double gamepad_x[2]={0.5,0.5}, gamepad_y[2]={0.5,0.5};
+static int gamepad_ready[2];
+static unsigned gamepad_pause_held;
+static Uint64 gamepad_clock;
+
+static void gamepad_clear(void)
+{
+    gamepad_ready[0]=gamepad_ready[1]=0;
+    gamepad_pause_held=0;
+    gamepad_clock=0;
+}
+
+static SDL_Keycode gamepad_menu_key(Uint8 button)
+{
+    switch(button){
+    case SDL_CONTROLLER_BUTTON_A:return SDLK_RETURN;
+    case SDL_CONTROLLER_BUTTON_B:case SDL_CONTROLLER_BUTTON_BACK:return SDLK_ESCAPE;
+    case SDL_CONTROLLER_BUTTON_DPAD_UP:return SDLK_UP;
+    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:return SDLK_DOWN;
+    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:return SDLK_LEFT;
+    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:return SDLK_RIGHT;
+    default:return SDLK_UNKNOWN;
+    }
+}
+
+static void gamepad_aim(SDL_GameController *pad, int player, double dt)
+{
+    double x=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_LEFTX);
+    double y=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_LEFTY);
+    const double rx=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_RIGHTX);
+    const double ry=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_RIGHTY);
+    if(rx*rx+ry*ry>x*x+y*y){x=rx;y=ry;}
+    const double length=sqrt(x*x+y*y), deadzone=8689.0;
+    if(length>deadzone){
+        const double strength=(fmin(length,32767.0)-deadzone)/(32767.0-deadzone);
+        const double movement=1.6*dt*strength*strength/length;
+        gamepad_x[player]=fmin(1.0,fmax(0.0,gamepad_x[player]+x*movement*g_win.h/g_win.w));
+        gamepad_y[player]=fmin(1.0,fmax(0.0,gamepad_y[player]+y*movement));
+    }
+    const int px=(int)lround(gamepad_x[player]*(g_win.w-1));
+    const int py=(int)lround(gamepad_y[player]*(g_win.h-1));
+    if(player){g_gun2_px=px;g_gun2_py=py;}
+    else{g_mouse_x=px;g_mouse_y=py;}
+}
+#endif
+
 static unsigned pad_bits(SDL_GameController *p, int *coin)
 {
     unsigned b = 0;
+#ifdef HOTD4_DESKTOP_PAUSE
+    if(input_gamepad_active){
+        if(SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_A) ||
+           SDL_GameControllerGetAxis(p,SDL_CONTROLLER_AXIS_TRIGGERRIGHT)>4000) b|=CAB_P1_TRIGGER;
+        if(SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_X) ||
+           SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) b|=CAB_P1_RELOAD;
+        if(SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_B) ||
+           SDL_GameControllerGetAxis(p,SDL_CONTROLLER_AXIS_TRIGGERLEFT)>4000) b|=CAB_P1_ACTION;
+        if(SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_Y) ||
+           SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)) b|=CAB_P1_FIREMODE;
+        if(SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_START)) b|=CAB_P1_START;
+        *coin=SDL_GameControllerGetButton(p,SDL_CONTROLLER_BUTTON_LEFTSTICK);
+        return b;
+    }
+#endif
     int ax = SDL_GameControllerGetAxis(p, SDL_CONTROLLER_AXIS_LEFTX);
     int ay = SDL_GameControllerGetAxis(p, SDL_CONTROLLER_AXIS_LEFTY);
     /* 8 sectors past a dead zone: an axis counts once it is over
@@ -413,6 +476,9 @@ static void pad_event(const SDL_Event *e)
                 fprintf(stderr, "[pad] player %d's controller removed\n", i + 1);
                 SDL_GameControllerClose(g_pad[i]);
                 g_pad[i] = NULL;
+#ifdef HOTD4_DESKTOP_PAUSE
+                gamepad_ready[i]=0;
+#endif
             }
         }
     }
@@ -422,15 +488,50 @@ static void pad_poll(void)
 {
     static int coin_was[2];
     unsigned held = 0;
+#ifdef HOTD4_DESKTOP_PAUSE
+    unsigned pauseHeld=0;
+    double dt=0;
+    if(input_gamepad_active){
+        if(raw_suspended || g_scripted || !g_win.win || g_win.w<1 || g_win.h<1 ||
+           !(SDL_GetWindowFlags(g_win.win)&SDL_WINDOW_INPUT_FOCUS)){
+            gamepad_clear();
+            g_cab_latch&=~g_pad_held;
+            g_pad_held=0;
+            coin_was[0]=coin_was[1]=0;
+            if(!g_scripted)g_gun2_on=0;
+            return;
+        }
+        const Uint64 now=SDL_GetPerformanceCounter();
+        if(gamepad_clock)dt=fmin((double)(now-gamepad_clock)/(double)SDL_GetPerformanceFrequency(),0.05);
+        gamepad_clock=now;
+        g_gun2_on=g_pad[1]!=NULL;
+    }
+#endif
     for (int i = 0; i < 2; i++) {
         int coin = 0;
         if (g_pad[i]) {
             unsigned b = pad_bits(g_pad[i], &coin);
+#ifdef HOTD4_DESKTOP_PAUSE
+            if(input_gamepad_active){
+                gamepad_aim(g_pad[i],i,dt);
+                const int pause=SDL_GameControllerGetButton(g_pad[i],SDL_CONTROLLER_BUTTON_BACK);
+                if(!gamepad_ready[i]){
+                    if(!pause && !b && !coin)gamepad_ready[i]=1;
+                    b=0;coin=0;
+                }else if(pause)pauseHeld|=1u<<i;
+            }
+#endif
             held |= i ? as_p2(b) : b;
         }
         if (coin && !coin_was[i]) g_cab.coins[i]++;
         coin_was[i] = coin;
     }
+#ifdef HOTD4_DESKTOP_PAUSE
+    if(input_gamepad_active){
+        if(pauseHeld & ~gamepad_pause_held)g_pause_requested=1;
+        gamepad_pause_held=pauseHeld;
+    }
+#endif
     g_cab_latch |= held & ~g_pad_held;
     g_pad_held = held;
 }
@@ -961,12 +1062,12 @@ static void pump(void)
                 fprintf(stderr, "[window] pointer left\n");
                 /* Pointing a real gun off the screen is the reload; the
                  * nearest thing a mouse can do is leave the window. */
-                if (input_active_mode < 2 && !g_relative_mode && g_pointer_in && settings()->leave_reload && !game_profile()->joystick && !g_capture_or_calib()) g_cab_latch |= CAB_P1_RELOAD;
+                if (!input_gamepad_active && input_active_mode < 2 && !g_relative_mode && g_pointer_in && settings()->leave_reload && !game_profile()->joystick && !g_capture_or_calib()) g_cab_latch |= CAB_P1_RELOAD;
                 g_pointer_in = 0;
             }
             break;
         case SDL_MOUSEMOTION:
-            if (input_active_mode >= 2) break;
+            if (input_active_mode >= 2 || input_gamepad_active) break;
             pthread_mutex_lock(&g_mouse_shake_mutex);
             if (g_mouse_shake_active)
                 mouse_shake_motion(&g_mouse_shake, e.motion.xrel, e.motion.yrel, SDL_GetTicks());
@@ -1001,7 +1102,7 @@ static void pump(void)
             break;
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP: {
-            if (input_active_mode >= 2) break;
+            if (input_active_mode >= 2 || input_gamepad_active) break;
             int b = button_of(e.button.button), down = e.type == SDL_MOUSEBUTTONDOWN;
             if (settings()->raw_mouse && g_relative_mode) {
                 /* g_mouse_x and g_mouse_y are already maintained in game coords */
@@ -1032,7 +1133,7 @@ static void pump(void)
                 break;
             }
             if (hc_matches(HC_MOUSELOCK,e.key.keysym.sym)) {
-                if (input_active_mode >= 2) break;
+                if (input_active_mode >= 2 || input_gamepad_active) break;
                 if (settings()->raw_mouse) {
                     g_relative_mode = !g_relative_mode;
                     SDL_SetRelativeMouseMode(g_relative_mode ? SDL_TRUE : SDL_FALSE);
@@ -2007,7 +2108,7 @@ static int pause_panel(PauseMenu *menu)
                            selected ? RGB(116, 34, 39) : RGB(38, 38, 45));
                 if (selected) pause_fill(dc, 31, y, 3, menu_height(menu), RGB(245, 115, 93));
                 int available = menu->settings_page != 2 ||
-                    (i==1 ? input_pref_mode>=2 : i==2 ? input_pref_mode==2 :
+                    (i==1 ? (input_pref_mode>=2 && input_pref_mode<INPUT_GAMEPAD) : i==2 ? input_pref_mode==2 :
                      (i==4 || i==5) ? (input_pref_mode==1 || input_pref_mode==4) : 1);
                 SelectObject(dc,item);
                 SetTextColor(dc,available ? white : muted);
@@ -2015,7 +2116,7 @@ static int pause_panel(PauseMenu *menu)
                 DrawTextW(dc,items[i],-1,&text_box,DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS);
             }
             pause_text(dc, hint, 32, 515, menu->settings_page == 2 ?
-                       input_pref_mode>=3 ? L"P1: gun buttons. P2: mouse / shooting keys. Restart to apply." :
+                       input_pref_mode==INPUT_GAMEPAD ? L"Gamepad: stick aims. RT/A shoots. X/LB reloads. Restart to apply." : input_pref_mode>=3 ? L"P1: gun buttons. P2: mouse / shooting keys. Restart to apply." :
                        L"Mouse tuning is live. Restart to apply input mode, MSAA or V-sync." : menu->settings_page ?
                        L"Arrow keys to adjust     Enter to select     Esc to go back" :
                        L"Arrow keys or mouse     Enter to select     Esc to resume", muted);
@@ -2422,6 +2523,10 @@ static int hotd4_pause_loop(int w, int h)
             if (event.type == SDL_QUIT) { action = MAIN_MENU; break; }
             if (event.type == SDL_CONTROLLERDEVICEADDED || event.type == SDL_CONTROLLERDEVICEREMOVED)
                 pad_event(&event);
+            if (input_gamepad_active && event.type==SDL_CONTROLLERBUTTONDOWN) {
+                SDL_Keycode key=gamepad_menu_key(event.cbutton.button);
+                if(key!=SDLK_UNKNOWN){SDL_zero(event);event.type=SDL_KEYDOWN;event.key.keysym.sym=key;}
+            }
             if (menu.photo) {
                 if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_RIGHT && menu.photo_ready) {
                     photo_start_drag(&menu);
@@ -2606,6 +2711,7 @@ static int hotd4_pause_loop(int w, int h)
         if (cursor >= 0) SDL_ShowCursor(cursor);
         SDL_FlushEvent(SDL_MOUSEMOTION);
         g_held = g_pad_held = g_cab_latch = 0;
+        if(input_gamepad_active)gamepad_clear();
         g_buttons = 0;
         g_in_tail = g_in_head;
     }
